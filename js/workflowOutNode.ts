@@ -2,13 +2,26 @@ import {LGraphNode} from "litegraph.js";
 
 export default class WorkflowOutNode extends LGraphNode {
     static title = "Workflow Out";
+    defaultBoxColor: string;
 
     constructor() {
         super(WorkflowOutNode.title);
-        this.addInput("in", 0);
+        this.defaultBoxColor = this.boxcolor;
+        this.addInput("in", "raster,vector,plot");
     }
 
     onExecute() {
-        this.graph?.setOutputData("Workflow Out", this.getInputData(0));
+        const operator: WorkflowOperator = this.getInputData(0);
+
+        if (operator) {
+            let type = this.getInputDataType(0);
+            type = type[0].toUpperCase() + type.substring(1);
+            const workflow: Workflow = {type, operator};
+            this.graph?.setOutputData("Workflow Out", workflow);
+            this.boxcolor = this.defaultBoxColor;
+        } else {
+            this.graph?.setOutputData("Workflow Out", null);
+            this.boxcolor = "red";
+        }
     }
 }

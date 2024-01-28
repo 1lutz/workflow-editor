@@ -13,4 +13,4 @@ except importlib.metadata.PackageNotFoundError:
 class WorkflowEditor(anywidget.AnyWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "widget.js"
     _css = pathlib.Path(__file__).parent / "static" / "widget.css"
-    value = traitlets.Dict().tag(sync=True)
+    workflow = traitlets.Dict().tag(sync=True)

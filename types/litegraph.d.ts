@@ -22,6 +22,7 @@ declare module "litegraph.js" {
 
     interface LGraph {
         addOutput(name: string, type: string | -1 | 0, value: any): void;
+        setOutputData(name: string, value: any): void;
     }
 }
 
