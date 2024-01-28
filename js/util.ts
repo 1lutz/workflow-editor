@@ -1,15 +1,14 @@
 import {INodeOutputSlot, LGraphNode, LiteGraph} from "litegraph.js";
 import {validate} from "jsonschema";
 
-export function extendedRegisterNodeClassFromObject(object: {
-    name: string,
+export function registerWorkflowOperator(object: {
     title: string,
     desc?: string,
     inputs?: [string, string, object?][],
-    outputs?: [string, string][]
+    required?: string[],
+    outputType: "raster" | "vector" | "plot"
 }) {
-    let typesToCopy: { [key: number]: number[] } = {};
-    let needsToValidateInputs = false;
+    let needsToValidateInputs = Boolean(object.required && object.required.length);
     const simplifiedInputs = object.inputs && object.inputs.map(input => {
         if (input.length === 2) {
             return input as [string, string];
@@ -18,20 +17,15 @@ export function extendedRegisterNodeClassFromObject(object: {
             return [input[0], input[1]] as [string, string];
         }
     });
-    const simplifiedOutputs = object.outputs && object.outputs.map((output, outIndex) => {
-        if (!output[1].startsWith("copyFrom")) {
-            return output;
-        } else {
-            const srcIndex = parseInt(output[1].substring(8));
-            let allOutIndexes = typesToCopy[srcIndex];
+    let simplifiedOutputType: string;
+    let inputSlotToCopyTypeFrom: undefined | number = undefined;
 
-            if (!allOutIndexes) {
-                allOutIndexes = typesToCopy[srcIndex] = [];
-            }
-            allOutIndexes.push(outIndex);
-            return [output[0], object.inputs![srcIndex][1]] as [string, string];
-        }
-    });
+    if (!object.outputType.startsWith("copyFrom")) {
+        simplifiedOutputType = object.outputType;
+    } else {
+        inputSlotToCopyTypeFrom = parseInt(object.outputType.substring(8));
+        simplifiedOutputType = object.inputs![inputSlotToCopyTypeFrom][1];
+    }
 
     class NewNode extends LGraphNode {
         static title = object.title;
@@ -45,53 +39,86 @@ export function extendedRegisterNodeClassFromObject(object: {
             if (simplifiedInputs) {
                 this.addInputs(simplifiedInputs);
             }
-            if (simplifiedOutputs) {
-                this.addOutputs(simplifiedOutputs);
-            }
+            this.addOutput("out", simplifiedOutputType);
         }
 
         onConnectInput(inputIndex: number, newOutputType: INodeOutputSlot["type"]): boolean {
-            const allOutIndexes = typesToCopy[inputIndex];
+            if (inputIndex === inputSlotToCopyTypeFrom) {
+                const oldOutputType = this.getOutputInfo(0)!.type;
 
-            if (allOutIndexes) {
-                const that = this;
-
-                function checkOutputDataType(outIndex: number) {
-                    const oldOutputType = that.getOutputInfo(outIndex)!.type;
-
-                    if (newOutputType !== oldOutputType) {
-                        that.disconnectOutput(outIndex);
-                        that.setOutputDataType(outIndex, newOutputType);
-                    }
+                if (newOutputType !== oldOutputType) {
+                    this.disconnectOutput(0);
+                    this.setOutputDataType(0, newOutputType);
                 }
-
-                allOutIndexes.forEach(checkOutputDataType);
             }
             return true;
         }
 
         onExecute() {
-            if (!needsToValidateInputs) return;
-            let isValid = true;
             const that = this;
 
-            function validateInput(inIndex: number) {
-                const inputInfo = object.inputs![inIndex];
-                if (inputInfo.length !== 3) return true;
-                const instance = that.getInputData(inIndex);
-                const schema = inputInfo[2]!
-                return validate(instance, schema).valid;
-            }
+            if (needsToValidateInputs) {
+                let isValid = true;
 
-            for (let i = 0; i < object.inputs!.length; i++) {
-                if (!validateInput(i)) {
-                    isValid = false;
-                    break;
+                function validateInput(inIndex: number) {
+                    const inputInfo = object.inputs![inIndex];
+                    const checkSet = Boolean(object.required && object.required.includes(inputInfo[0]));
+                    const checkSchema = inputInfo.length === 3;
+
+                    if (checkSet || checkSchema) {
+                        const instance = that.getInputData(inIndex);
+
+                        if (checkSet && instance === undefined) {
+                            return false;
+                        }
+                        if (checkSchema && !validate(instance, inputInfo[2]).valid) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                for (let i = 0; i < object.inputs!.length; i++) {
+                    if (!validateInput(i)) {
+                        isValid = false;
+                        break;
+                    }
+                }
+                if (isValid) {
+                    this.boxcolor = this.defaultBoxColor;
+                } else {
+                    this.boxcolor = "red";
+                    this.setOutputData(0, undefined);
+                    return;
                 }
             }
-            this.boxcolor = isValid ? this.defaultBoxColor : "red";
+            let res: WorkflowOperator = {
+                type: object.title,
+                params: {}
+            };
+            if (object.inputs) {
+                function importInputData(inIndex: number) {
+                    const inData = that.getInputData(inIndex);
+                    if (inData === undefined) return;
+
+                    const inName = object.inputs![inIndex][0];
+                    const inType = that.getInputDataType(inIndex);
+
+                    if (inType === "raster" || inType === "vector") {
+                        if (!res.sources) res.sources = {};
+                        res.sources[inName] = inData;
+                    } else {
+                        res.params[inName] = inData;
+                    }
+                }
+
+                for (let i = 0; i < object.inputs.length; i++) {
+                    importInputData(i);
+                }
+            }
+            this.setOutputData(0, res);
         }
     }
 
-    LiteGraph.registerNodeType(object.name, NewNode);
+    LiteGraph.registerNodeType("geoengine/" + object.title, NewNode);
 }
