@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "workflow_editor"
 version = "0.0.0"
-dependencies = ["anywidget"]
+dependencies = ["anywidget", "jsonschema"]
 
 [project.optional-dependencies]
 dev = ["watchfiles", "jupyterlab"]
