@@ -18,8 +18,10 @@
                 }
             }},
             {"name": "attributeFilters", "type": "array", "schema": {
+                "title": "Attribute Filters",
                 "type": "array",
                 "items": {
+                    "title": "Attribute Filter",
                     "type": "object",
                     "properties": {
                         "attribute": {
@@ -28,23 +30,41 @@
                         "ranges": {
                             "type": [
                                 {
+                                    "title": "Number Ranges",
                                     "type": "array",
                                     "items": {
+                                        "title": "Number Range",
                                         "type": "array",
-                                        "items": {
-                                            "type": "number"
-                                        },
+                                        "items": [
+                                            {
+                                                "title": "Start",
+                                                "type": "number"
+                                            },
+                                            {
+                                                "title": "End",
+                                                "type": "number"
+                                            }
+                                        ],
                                         "minItems": 2,
                                         "maxItems": 2
                                     }
                                 },
                                 {
+                                    "title": "String Ranges",
                                     "type": "array",
                                     "items": {
+                                        "title": "String Range",
                                         "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        },
+                                        "items": [
+                                            {
+                                                "title": "Start",
+                                                "type": "string"
+                                            },
+                                            {
+                                                "title": "End",
+                                                "type": "string"
+                                            }
+                                        ],
                                         "minItems": 2,
                                         "maxItems": 2
                                     }
