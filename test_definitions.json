@@ -1,0 +1,270 @@
+[
+    {
+        "title": "GdalSource",
+        "inputs": [
+            {"name": "data", "type": "string"}
+        ],
+        "required": ["data"],
+        "outputType": "raster"
+    },
+    {
+        "title": "OgrSource",
+        "inputs": [
+            {"name": "data", "type": "string"},
+            {"name": "attributeProjection", "type": "array", "schema": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }},
+            {"name": "attributeFilters", "type": "array", "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "attribute": {
+                            "type": "string"
+                        },
+                        "ranges": {
+                            "type": [
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "number"
+                                        },
+                                        "minItems": 2,
+                                        "maxItems": 2
+                                    }
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "minItems": 2,
+                                        "maxItems": 2
+                                    }
+                                }
+                            ]
+                        },
+                        "keepNulls": {
+                            "type": "boolean"
+                        }
+                    },
+                    "required": ["attribute", "ranges", "keepNulls"]
+                }
+            }}
+        ],
+        "required": ["data"],
+        "outputType": "vector"
+    },
+    {
+        "title": "Expression",
+        "inputs": [
+            {"name": "expression", "type": "string"},
+            {"name": "outputType", "type": "string", "schema": {
+                "type": "string",
+                "enum": ["U8", "U16", "U32", "U64", "I8", "I16", "I32", "I64", "F32", "F64"]
+            }},
+            {"name": "outputMeasurement", "type": "object", "schema": {
+                "type": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": ["unitless"]
+                            }
+                        },
+                        "required": ["type"]
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": ["continuous"]
+                            },
+                            "measurement": {
+                                "type": "string"
+                            },
+                            "unit": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["type", "measurement"]
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": ["classification"]
+                            },
+                            "measurement": {
+                                "type": "string"
+                            },
+                            "classes": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": ["type", "measurement", "classes"]
+                    }
+                ]
+            }},
+            {"name": "mapNoData", "type": "boolean"},
+            {"name": "a", "type": "raster"},
+            {"name": "b", "type": "raster"},
+            {"name": "c", "type": "raster"},
+            {"name": "d", "type": "raster"},
+            {"name": "e", "type": "raster"},
+            {"name": "f", "type": "raster"},
+            {"name": "g", "type": "raster"},
+            {"name": "h", "type": "raster"}
+        ],
+        "required": ["expression", "outputType", "mapNoData", "a"],
+        "outputType": "raster"
+    },
+    {
+        "title": "PointInPolygonFilter",
+        "inputs": [
+            {"name": "points", "type": "vector"},
+            {"name": "polygons", "type": "vector"}
+        ],
+        "required": ["points", "polygons"],
+        "outputType": "vector"
+    },
+    {
+        "title": "Reprojection",
+        "inputs": [
+            {"name": "targetSpatialReference", "type": "string"},
+            {"name": "source", "type": "raster,vector"}
+        ],
+        "required": ["targetSpatialReference"],
+        "outputType": "copyFrom1"
+    },
+    {
+        "title": "Rgb",
+        "inputs": [
+            {"name": "redMin", "type": "number"},
+            {"name": "redMax", "type": "number"},
+            {"name": "redScale", "type": "number", "schema": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+            }},
+            {"name": "greenMin", "type": "number"},
+            {"name": "greenMax", "type": "number"},
+            {"name": "greenScale", "type": "number", "schema": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+            }},
+            {"name": "blueMin", "type": "number"},
+            {"name": "blueMax", "type": "number"},
+            {"name": "blueScale", "type": "number", "schema": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+            }},
+            {"name": "red", "type": "raster"},
+            {"name": "green", "type": "raster"},
+            {"name": "blue", "type": "raster"}
+        ],
+        "required": ["redMin", "redMax", "greenMin", "greenMax", "blueMin", "blueMax", "red", "green", "blue"],
+        "outputType": "raster"
+    },
+    {
+        "title": "LineSimplification",
+        "inputs": [
+            {"name": "algorithm", "type": "string", "schema": {
+                "type": "string",
+                "enum": ["douglasPeucker", "visvalingam"]
+            }},
+            {"name": "epsilon", "type": "number"},
+            {"name": "vector", "type": "vector"}
+        ],
+        "required": ["algorithm", "vector"],
+        "outputType": "vector"
+    },
+    {
+        "title": "TemporalRasterAggregation",
+        "inputs": [
+            {"name": "aggregation", "type": "object", "schema": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": ["min", "max", "first", "last", "mean", "sum", "count"]
+                    },
+                    "ignoreNoData": {
+                        "type": "boolean"
+                    }
+                },
+                "required": ["type", "ignoreNoData"]
+            }},
+            {"name": "window", "type": "object", "schema": {
+                "type": "object",
+                "properties": {
+                    "granularity": {
+                        "type": "string",
+                        "enum": ["millis", "seconds", "minutes", "hours", "days", "months", "years"]
+                    },
+                    "step": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0
+                    }
+                },
+                "required": ["granularity", "step"]
+            }},
+            {"name": "windowReference", "type": "string", "schema": {
+                "type": "string",
+                "pattern": "^\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z)$"
+            }},
+            {"name": "outputType", "type": "string", "schema": {
+                "type": "string",
+                "enum": ["U8", "U16", "U32", "U64", "I8", "I16", "I32", "I64", "F32", "F64"]
+            }},
+            {"name": "raster", "type": "raster"}
+        ],
+        "required": ["aggregation", "window", "raster"],
+        "outputType": "raster"
+    },
+    {
+        "title": "RasterVectorJoin",
+        "inputs": [
+            {"name": "names", "type": "array", "schema": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }},
+            {"name": "featureAggregation", "type": "string", "schema": {
+                "type": "string",
+                "enum": ["first", "mean"]
+            }},
+            {"name": "featureAggregationIgnoreNoData", "type": "boolean"},
+            {"name": "temporalAggregation", "type": "string", "schema": {
+                "type": "string",
+                "enum": ["none", "first", "mean"]
+            }},
+            {"name": "temporalAggregationIgnoreNoData", "type": "boolean"},
+            {"name": "vector", "type": "vector"},
+            {"name": "rasters", "type": "array", "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object"
+                }
+            }}
+        ],
+        "required": ["names", "featureAggregation", "temporalAggregation", "vector", "rasters"],
+        "outputType": "vector"
+    }
+]

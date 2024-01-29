@@ -1,21 +1,14 @@
 import {INodeOutputSlot, LGraphNode, LiteGraph} from "litegraph.js";
 import {validate} from "jsonschema";
+import {OPERATOR_CATEGORY} from "./constants.ts";
 
-export function registerWorkflowOperator(object: {
-    title: string,
-    desc?: string,
-    inputs?: [string, string, object?][],
-    required?: string[],
-    outputType: "raster" | "vector" | "plot"
-}) {
+export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
     let needsToValidateInputs = Boolean(object.required && object.required.length);
     const simplifiedInputs = object.inputs && object.inputs.map(input => {
-        if (input.length === 2) {
-            return input as [string, string];
-        } else {
+        if (input.schema) {
             needsToValidateInputs = true;
-            return [input[0], input[1]] as [string, string];
         }
+        return [input.name, input.type] as [string, string];
     });
     let simplifiedOutputType: string;
     let inputSlotToCopyTypeFrom: undefined | number = undefined;
@@ -24,7 +17,7 @@ export function registerWorkflowOperator(object: {
         simplifiedOutputType = object.outputType;
     } else {
         inputSlotToCopyTypeFrom = parseInt(object.outputType.substring(8));
-        simplifiedOutputType = object.inputs![inputSlotToCopyTypeFrom][1];
+        simplifiedOutputType = object.inputs![inputSlotToCopyTypeFrom].type;
     }
 
     class NewNode extends LGraphNode {
@@ -62,8 +55,8 @@ export function registerWorkflowOperator(object: {
 
                 function validateInput(inIndex: number) {
                     const inputInfo = object.inputs![inIndex];
-                    const checkSet = Boolean(object.required && object.required.includes(inputInfo[0]));
-                    const checkSchema = inputInfo.length === 3;
+                    const checkSet = Boolean(object.required && object.required.includes(inputInfo.name));
+                    const checkSchema = Boolean(inputInfo.schema);
 
                     if (checkSet || checkSchema) {
                         const instance = that.getInputData(inIndex);
@@ -71,7 +64,7 @@ export function registerWorkflowOperator(object: {
                         if (checkSet && instance === undefined) {
                             return false;
                         }
-                        if (checkSchema && !validate(instance, inputInfo[2]).valid) {
+                        if (checkSchema && !validate(instance, inputInfo.schema).valid) {
                             return false;
                         }
                     }
@@ -101,7 +94,7 @@ export function registerWorkflowOperator(object: {
                     const inData = that.getInputData(inIndex);
                     if (inData === undefined) return;
 
-                    const inName = object.inputs![inIndex][0];
+                    const inName = object.inputs![inIndex].name;
                     const inType = that.getInputDataType(inIndex);
 
                     if (inType === "raster" || inType === "vector") {
@@ -119,6 +112,5 @@ export function registerWorkflowOperator(object: {
             this.setOutputData(0, res);
         }
     }
-
-    LiteGraph.registerNodeType("geoengine/" + object.title, NewNode);
+    LiteGraph.registerNodeType(OPERATOR_CATEGORY + "/" + object.title, NewNode);
 }
