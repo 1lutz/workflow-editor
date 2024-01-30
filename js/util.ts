@@ -1,6 +1,6 @@
 import {INodeOutputSlot, LGraphNode, LiteGraph} from "litegraph.js";
 import {validate} from "jsonschema";
-import {OPERATOR_CATEGORY} from "./constants.ts";
+import {OPERATOR_CATEGORY} from "./constants";
 
 export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
     let needsToValidateInputs = Boolean(object.required && object.required.length);
@@ -14,9 +14,11 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
     let inputSlotToCopyTypeFrom: undefined | number = undefined;
 
     if (!object.outputType.startsWith("copyFrom")) {
+        // noinspection JSUnusedAssignment
         simplifiedOutputType = object.outputType;
     } else {
         inputSlotToCopyTypeFrom = parseInt(object.outputType.substring(8));
+        // noinspection JSUnusedAssignment
         simplifiedOutputType = object.inputs![inputSlotToCopyTypeFrom].type;
     }
 
