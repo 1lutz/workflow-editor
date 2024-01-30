@@ -18,6 +18,12 @@ declare module "litegraph.js" {
             type: string | -1 | 0,
             extra_info?: Partial<INodeInputSlot>
         ): INodeInputSlot;
+
+        addOutput(
+            name: string,
+            type: string | -1 | 0,
+            extra_info?: Partial<INodeOutputSlot>
+        ): INodeOutputSlot;
     }
 
     interface LGraph {
