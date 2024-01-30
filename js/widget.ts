@@ -2,15 +2,15 @@ import type {RenderContext} from "@anywidget/types";
 import "litegraph.js/css/litegraph";
 import "./widget.css";
 import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
-import {registerWorkflowOperator} from "./util.ts";
-import WorkflowOutNode from "./workflowOutNode.ts";
+import {registerWorkflowOperator} from "./util";
+import WorkflowOutNode from "./workflowOutNode";
 import {
     OPERATOR_CATEGORY,
     PREDEFINED_NODE_TYPES,
     TYPED_JSON_EDITOR_NODE_TYPE,
     WORKFLOW_OUT_NODE_TYPE
-} from "./constants.ts";
-import TypedJsonEditorNode from "./typedJsonEditorNode.ts";
+} from "./constants";
+import TypedJsonEditorNode from "./typedJsonEditorNode";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
 interface WidgetModel {

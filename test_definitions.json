@@ -12,6 +12,7 @@
         "inputs": [
             {"name": "data", "type": "string"},
             {"name": "attributeProjection", "type": "array", "schema": {
+                "title": "Attributes to select",
                 "type": "array",
                 "items": {
                     "type": "string"

@@ -111,6 +111,7 @@ class TypedJsonEditorModal {
             console.log("create new editor");
             this.editor = new JSONEditor(this.holderDiv, {
                 theme: "bootstrap5",
+                iconlib: "fontawesome5",
                 schema
             });
             this.oldSchema = schema;
@@ -172,7 +173,7 @@ export default class TypedJsonEditorNode extends LGraphNode {
     }
 
     edit() {
-        if (!this.schema) {
+        if (!this.schema || !this.getOutputInfo(0)?.links.length) {
             alert("Zum Bearbeiten muss der Knoten mit einem Eingang eines Workflow Operators verbunden werden, welcher ein Schema spezifiziert.");
             return;
         }
