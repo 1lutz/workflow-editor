@@ -22,3 +22,9 @@ type WorkflowOperatorDefinition = {
     required?: string[],
     outputType: string
 }
+
+interface OperatorNodeInfo {
+    getInputSchema(slot: number): object | undefined;
+
+    isInputRequired(slot: number): boolean;
+}

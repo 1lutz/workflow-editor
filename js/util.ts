@@ -20,7 +20,7 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
         simplifiedOutputType = object.inputs![inputSlotToCopyTypeFrom].type;
     }
 
-    class NewNode extends LGraphNode {
+    class NewNode extends LGraphNode implements OperatorNodeInfo {
         static title = object.title;
         static desc = object.desc || "Generated from object";
         defaultBoxColor: string;
@@ -115,6 +115,14 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
         getInputSchema(slot: number): object | undefined {
             return object.inputs && object.inputs[slot]?.schema;
         }
+
+        isInputRequired(slot: number): boolean {
+            return Boolean(object.inputs && object.required && object.required.includes(object.inputs[slot]?.name));
+        }
     }
     LiteGraph.registerNodeType(OPERATOR_CATEGORY + "/" + object.title, NewNode);
+}
+
+export function isOperatorNode(arg: any): arg is OperatorNodeInfo {
+    return arg && typeof arg.getInputSchema === "function" && typeof arg.isInputRequired === "function";
 }

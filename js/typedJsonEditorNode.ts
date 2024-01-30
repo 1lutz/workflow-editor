@@ -5,6 +5,7 @@ import {JSONEditor} from "@json-editor/json-editor/dist/nonmin/jsoneditor.js"
 import {Modal} from "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {TYPED_JSON_EDITOR_HOLDER_ID, TYPED_JSON_EDITOR_MODAL_ID} from "./constants.ts";
+import {isOperatorNode} from "./util.ts";
 
 type TypedJsonEditorModalDiv = HTMLElement & {
     instance?: TypedJsonEditorModal;
@@ -44,8 +45,20 @@ class TypedJsonEditorModal {
         document.body.appendChild(modalDiv);
 
         const saveButton = document.querySelector(`#${TYPED_JSON_EDITOR_MODAL_ID} .modal-footer .btn-primary`)!;
-        saveButton.addEventListener("click", function () {
+        saveButton.addEventListener("click", function() {
             TypedJsonEditorModal.Instance.handleSave();
+        });
+
+        modalDiv.addEventListener("keypress", function(event) {
+            if ((event.keyCode === 13 || event.which === 13) && TypedJsonEditorModal.Instance.modalBs._isShown) {
+                // enter pressed in modal
+                if (document.activeElement?.nodeName === "INPUT" && document.activeElement.getAttribute("type") === "text") {
+                    // manually trigger change event on text inputs to update in model
+                    document.activeElement.dispatchEvent(new Event("change"));
+                    console.log("updated input on enter");
+                }
+                TypedJsonEditorModal.Instance.handleSave();
+            }
         });
 
         this.modalBs = new Modal(modalDiv);
@@ -68,15 +81,14 @@ class TypedJsonEditorModal {
     }
 
     private handleSave() {
-        console.log("in handleSave");
-
         if (!this.currentNode) {
-            console.log("Editor detached from node on save. Should normally never happen.");
+            console.log("ERROR: Editor detached from node on save. Should normally never happen.");
             return;
         }
         const isValid = this.editor.validate().length === 0;
 
         if (isValid) {
+            console.log("saving", this.editor.getValue());
             this.currentNode.setOutputData(0, this.editor.getValue());
             this.modalBs.hide();
         } else {
@@ -99,6 +111,11 @@ class TypedJsonEditorModal {
                 schema
             });
             this.oldSchema = schema;
+        } else if (this.editor.getValue() === currentNode.getOutputData(0)) {
+            console.log("value in existing editor did not change");
+        } else {
+            console.log("update value in existing editor");
+            this.editor.setValue(currentNode.getOutputData(0));
         }
         this.modalBs.show();
     }
@@ -110,6 +127,7 @@ export default class TypedJsonEditorNode extends LGraphNode {
     private defaultBoxColor: string;
     private oldSchema?: object;
     private schema?: object;
+    private isRequired = false;
 
     constructor() {
         super(TypedJsonEditorNode.title);
@@ -119,14 +137,21 @@ export default class TypedJsonEditorNode extends LGraphNode {
     }
 
     onExecute() {
-        this.boxcolor = this.getOutputData(0) === undefined ? "red" : this.defaultBoxColor;
+        this.boxcolor = this.isRequired && this.getOutputData(0) === undefined ? "red" : this.defaultBoxColor;
     }
 
     onConnectOutput(_outputIndex: number, _inputType: INodeInputSlot["type"], _inputSlot: INodeInputSlot, inputNode: LGraphNode, inputIndex: number): boolean {
         // can only connect with one node at a time
         this.disconnectOutput(0);
+        // if the editor is unconnected it should show no error indicator
+        this.isRequired = false;
 
-        this.schema = "getInputSchema" in inputNode && typeof inputNode.getInputSchema === "function" ? inputNode.getInputSchema(inputIndex) : undefined;
+        if (!isOperatorNode(inputNode)) {
+            this.setOutputData(0, undefined);
+            alert("Der Editor kann nur mit einem Workflow Operator verwendet werden.");
+            return false;
+        }
+        this.schema = inputNode.getInputSchema(inputIndex);
 
         if (!this.schema) {
             this.setOutputData(0, undefined);
@@ -138,12 +163,14 @@ export default class TypedJsonEditorNode extends LGraphNode {
             console.log("reset node output of editor because schema changed");
         }
         this.oldSchema = this.schema;
+        this.isRequired = inputNode.isInputRequired(inputIndex);
+        console.log("is connected input required?", this.isRequired);
         return true;
     }
 
     edit() {
         if (!this.schema) {
-            alert("Zum Bearbeiten muss der Knoten mit genau einem Eingang verbunden werden, der ein Schema spezifiziert.");
+            alert("Zum Bearbeiten muss der Knoten mit einem Eingang eines Workflow Operators verbunden werden, welcher ein Schema spezifiziert.");
             return;
         }
         TypedJsonEditorModal.Instance.show(this, this.schema);
