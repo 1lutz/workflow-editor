@@ -31,5 +31,3 @@ declare module "litegraph.js" {
         setOutputData(name: string, value: any): void;
     }
 }
-
-export {};

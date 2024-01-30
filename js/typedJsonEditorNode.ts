@@ -1,11 +1,10 @@
 import {INodeInputSlot, LGraphNode} from "litegraph.js";
 // @ts-ignore
-import {JSONEditor} from "@json-editor/json-editor/dist/nonmin/jsoneditor.js"
-// @ts-ignore
+import {JSONEditor} from "@json-editor/json-editor/dist/jsoneditor.js"
 import {Modal} from "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
-import {TYPED_JSON_EDITOR_HOLDER_ID, TYPED_JSON_EDITOR_MODAL_ID} from "./constants.ts";
-import {isOperatorNode} from "./util.ts";
+import {TYPED_JSON_EDITOR_HOLDER_ID, TYPED_JSON_EDITOR_MODAL_ID} from "./constants";
+import {isOperatorNode} from "./util";
 
 type TypedJsonEditorModalDiv = HTMLElement & {
     instance?: TypedJsonEditorModal;
@@ -15,7 +14,7 @@ class TypedJsonEditorModal {
     private static instance: TypedJsonEditorModal;
 
     private modalBs: Modal;
-    private editor: JSONEditor;
+    private editor?: JSONEditor;
     private holderDiv: HTMLElement;
     private currentNode?: TypedJsonEditorNode;
     private oldSchema?: object;
@@ -82,7 +81,11 @@ class TypedJsonEditorModal {
 
     private handleSave() {
         if (!this.currentNode) {
-            console.log("ERROR: Editor detached from node on save. Should normally never happen.");
+            console.log("ERROR: Editor detached from node on save.");
+            return;
+        }
+        if (!this.editor) {
+            console.log("ERROR: No JSONEditor registered on save.");
             return;
         }
         const isValid = this.editor.validate().length === 0;
