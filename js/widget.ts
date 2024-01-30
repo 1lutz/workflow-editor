@@ -4,7 +4,13 @@ import "./widget.css";
 import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
 import {registerWorkflowOperator} from "./util.ts";
 import WorkflowOutNode from "./workflowOutNode.ts";
-import {OPERATOR_CATEGORY, WORKFLOW_OUT_NODE_TYPE} from "./constants.ts";
+import {
+    OPERATOR_CATEGORY,
+    PREDEFINED_NODE_TYPES,
+    TYPED_JSON_EDITOR_NODE_TYPE,
+    WORKFLOW_OUT_NODE_TYPE
+} from "./constants.ts";
+import TypedJsonEditorNode from "./typedJsonEditorNode.ts";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
 interface WidgetModel {
@@ -39,10 +45,11 @@ export function render({model, el}: RenderContext<WidgetModel>) {
         string: "#447",
         boolean: "#744",
     };
-    window.graphcanvas = canvas;
 
     graph.addOutput("Workflow Out", "raster,vector,plot", null);
     LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
+
+    LiteGraph.registerNodeType(TYPED_JSON_EDITOR_NODE_TYPE, TypedJsonEditorNode);
 
     let domButton = document.createElement("button");
     domCanvas.classList.add("workflow_editor-execute");
@@ -67,8 +74,8 @@ export function render({model, el}: RenderContext<WidgetModel>) {
 
         for (const registeredOperator of registeredOperators) {
             // @ts-ignore
-            if (registeredOperator.type === WORKFLOW_OUT_NODE_TYPE) {
-                //keep "Workflow Out" node
+            if (PREDEFINED_NODE_TYPES.includes(registeredOperator.type)) {
+                //keep predefined nodes like "Workflow Out"
                 continue;
             }
             const nodesWithType = graph.findNodesByClass(registeredOperator);

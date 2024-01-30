@@ -111,6 +111,10 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
             }
             this.setOutputData(0, res);
         }
+
+        getInputSchema(slot: number): object | undefined {
+            return object.inputs && object.inputs[slot]?.schema;
+        }
     }
     LiteGraph.registerNodeType(OPERATOR_CATEGORY + "/" + object.title, NewNode);
 }
