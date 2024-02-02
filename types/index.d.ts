@@ -12,6 +12,7 @@ type Workflow = {
 type WorkflowOperatorInput = {
     name: string,
     type: string,
+    forceAsSource?: boolean,
     schema?: object
 }
 
@@ -20,7 +21,7 @@ type WorkflowOperatorDefinition = {
     desc?: string,
     inputs?: WorkflowOperatorInput[],
     required?: string[],
-    outputType: string
+    outputType: 'raster' | 'vector' | 'plot' | 'copyFromSource'
 }
 
 interface OperatorNodeInfo {

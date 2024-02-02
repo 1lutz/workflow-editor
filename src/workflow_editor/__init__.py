@@ -23,7 +23,7 @@ session.mount('file://', requests_file.FileAdapter())
 class WorkflowEditor(anywidget.AnyWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "widget.js"
     _css = pathlib.Path(__file__).parent / "static" / "widget.css"
-    
+
     definitions = traitlets.List(WorkflowOperatorDefinition())\
         .tag(sync=True)  # type: traitlets.traitlets.List[WorkflowOperatorDefinition] # noqa
     workflow = traitlets.Dict(

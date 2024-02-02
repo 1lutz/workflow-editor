@@ -2,6 +2,10 @@ import {INodeOutputSlot, LGraphNode, LiteGraph} from "litegraph.js";
 import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY} from "./constants";
 
+function isSource(input: WorkflowOperatorInput): boolean {
+    return input.forceAsSource || input.type.includes("raster") || input.type.includes("vector") || input.type.includes("plot");
+}
+
 export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
     let needsToValidateInputs = Boolean(object.required && object.required.length);
     const simplifiedInputs = object.inputs && object.inputs.map(input => {
@@ -13,13 +17,13 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
     let simplifiedOutputType: string;
     let inputSlotToCopyTypeFrom: undefined | number = undefined;
 
-    if (!object.outputType.startsWith("copyFrom")) {
-        // noinspection JSUnusedAssignment
-        simplifiedOutputType = object.outputType;
-    } else {
-        inputSlotToCopyTypeFrom = parseInt(object.outputType.substring(8));
+    if (object.outputType === "copyFromSource") {
+        inputSlotToCopyTypeFrom = object.inputs!.findIndex(isSource);
         // noinspection JSUnusedAssignment
         simplifiedOutputType = object.inputs![inputSlotToCopyTypeFrom].type;
+    } else {
+        // noinspection JSUnusedAssignment
+        simplifiedOutputType = object.outputType;
     }
 
     class NewNode extends LGraphNode implements OperatorNodeInfo {
@@ -96,14 +100,13 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
                     const inData = that.getInputData(inIndex);
                     if (inData === undefined) return;
 
-                    const inName = object.inputs![inIndex].name;
-                    const inType = that.getInputDataType(inIndex);
+                    const inInfo = object.inputs![inIndex];
 
-                    if (inType === "raster" || inType === "vector") {
+                    if (isSource(inInfo)) {
                         if (!res.sources) res.sources = {};
-                        res.sources[inName] = inData;
+                        res.sources[inInfo.name] = inData;
                     } else {
-                        res.params[inName] = inData;
+                        res.params[inInfo.name] = inData;
                     }
                 }
 

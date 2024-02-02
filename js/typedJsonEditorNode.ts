@@ -112,6 +112,7 @@ class TypedJsonEditorModal {
             this.editor = new JSONEditor(this.holderDiv, {
                 theme: "bootstrap5",
                 iconlib: "fontawesome5",
+                disable_array_delete_last_row: true,
                 schema
             });
             this.oldSchema = schema;
