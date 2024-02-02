@@ -169,7 +169,7 @@
             {"name": "source", "type": "raster,vector"}
         ],
         "required": ["targetSpatialReference"],
-        "outputType": "copyFrom1"
+        "outputType": "copyFromSource"
     },
     {
         "title": "Rgb",
@@ -287,5 +287,21 @@
         ],
         "required": ["names", "featureAggregation", "temporalAggregation", "vector", "rasters"],
         "outputType": "vector"
+    },
+    {
+        "title": "BoxPlot",
+        "inputs": [
+            {"name": "columnNames", "type": "array", "schema": {
+                "description": "Name of the (numeric) attributes to compute the box plots on.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "title": "column"
+                }
+            }},
+            {"name": "source", "type": "array,vector"}
+        ],
+        "required": ["source"],
+        "outputType": "plot"
     }
 ]

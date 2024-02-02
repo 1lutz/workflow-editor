@@ -14,6 +14,7 @@ class WorkflowOperatorDefinition(traitlets.TraitType[G, S]):
             isinstance(o, dict) and
             "name" in o and isinstance(o["name"], str) and
             "type" in o and isinstance(o["type"], str) and
+            ("forceAsSource" not in o or isinstance(o["forceAsSource"], bool)) and  # noqa
             ("schema" not in o or isinstance(o["schema"], dict))
             for o in inputs
         ))
@@ -32,7 +33,7 @@ class WorkflowOperatorDefinition(traitlets.TraitType[G, S]):
                 ("desc" not in value or isinstance(value["desc"], str)) and
                 WorkflowOperatorDefinition.__check_inputs(value.get("inputs")) and  # noqa
                 WorkflowOperatorDefinition.__check_required(value.get("required")) and  # noqa
-                "outputType" in value and isinstance(value["outputType"], str)
+                value.get("outputType") in ["raster", "vector", "plot", "copyFromSource"]  # noqa
             ):
                 return t.cast(G, value)
         self.error(obj, value)
