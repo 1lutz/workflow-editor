@@ -160,7 +160,7 @@ export default class TypedJsonEditorNode extends LGraphNode {
 
         if (!this.schema) {
             this.setOutputData(0, undefined);
-            alert("Der mit dem Knoten verbundene Eingang spezifiziert kein Schema. Dieses ist jedoch zum Bearbeiten erforderlich.");
+            alert("Der mit dem Editor verbundene Eingang spezifiziert kein Schema. Dieses ist jedoch zum Bearbeiten erforderlich.");
             return false;
         }
         if (this.getOutputData(0) !== undefined && this.oldSchema !== this.schema) {
@@ -175,7 +175,7 @@ export default class TypedJsonEditorNode extends LGraphNode {
 
     edit() {
         if (!this.schema || !this.getOutputInfo(0)?.links.length) {
-            alert("Zum Bearbeiten muss der Knoten mit einem Eingang eines Workflow Operators verbunden werden, welcher ein Schema spezifiziert.");
+            alert("Zum Bearbeiten muss der Editor mit einem Eingang eines Workflow Operators verbunden werden, welcher ein Schema spezifiziert.");
             return;
         }
         TypedJsonEditorModal.Instance.show(this, this.schema);
