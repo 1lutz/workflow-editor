@@ -168,7 +168,7 @@
             {"name": "targetSpatialReference", "type": "string"},
             {"name": "source", "type": "raster,vector"}
         ],
-        "required": ["targetSpatialReference"],
+        "required": ["targetSpatialReference", "source"],
         "outputType": "copyFromSource"
     },
     {

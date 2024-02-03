@@ -7,7 +7,7 @@ export default class WorkflowOutNode extends LGraphNode {
     constructor() {
         super(WorkflowOutNode.title);
         this.defaultBoxColor = this.boxcolor;
-        this.addInput("in", "raster,vector,plot");
+        this.addInput("return", "raster,vector,plot");
     }
 
     onExecute() {
