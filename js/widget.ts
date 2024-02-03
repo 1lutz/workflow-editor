@@ -52,11 +52,12 @@ export function render({model, el}: RenderContext<WidgetModel>) {
     LiteGraph.registerNodeType(TYPED_JSON_EDITOR_NODE_TYPE, TypedJsonEditorNode);
 
     let domButton = document.createElement("button");
-    domCanvas.classList.add("workflow_editor-execute");
+    domButton.classList.add("workflow_editor-execute", "btn", "btn-outline-primary", "btn-sm");
     domButton.innerHTML = "Execute";
     domButton.addEventListener("click", () => {
         graph.setOutputData("Workflow Out", null);
         graph.runStep();
+        graph.setDirtyCanvas(true, false);
         const workflow = graph.getOutputData("Workflow Out");
         model.set("workflow", workflow);
         model.save_changes();
