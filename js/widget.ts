@@ -61,6 +61,14 @@ export function render({model, el}: RenderContext<WidgetModel>) {
         const workflow = graph.getOutputData("Workflow Out");
         model.set("workflow", workflow);
         model.save_changes();
+
+        const workflowOutCount = graph.findNodesByType(WORKFLOW_OUT_NODE_TYPE).length;
+
+        if (workflowOutCount === 0) {
+            alert("Es muss ein Ausgabeblock vorhanden sein. Füge dem Graphen einen \"Workflow Out\"-Block hinzu und verbinde ihn mit einem Operator, zum Beispiel \"GdalSource\".");
+        } else if (workflowOutCount > 1) {
+            alert("Damit das Ergebnis eindeutig ist, darf es nur einen Ausgabeblock geben. Lösche überschüssige \"Workflow Out\"-Block.");
+        }
     });
     el.appendChild(domButton);
 

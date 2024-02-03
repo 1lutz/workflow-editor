@@ -1,3 +1,10 @@
 .workflow_editor-canvas {
 	border: 1px solid;
+	border-radius: .375rem;
+	margin-bottom: 1rem;
+	box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .30);
+}
+
+.je-switcher {
+	min-width: 150px;
 }
