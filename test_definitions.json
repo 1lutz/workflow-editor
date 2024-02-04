@@ -278,7 +278,7 @@
             }},
             {"name": "temporalAggregationIgnoreNoData", "type": "boolean"},
             {"name": "vector", "type": "vector"},
-            {"name": "rasters", "type": "array", "schema": {
+            {"name": "rasters", "type": "array", "forceAsSource": true, "schema": {
                 "type": "array",
                 "items": {
                     "type": "object"
