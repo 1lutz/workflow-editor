@@ -1,6 +1,7 @@
 [
     {
         "title": "GdalSource",
+        "helpUrl": "https://docs.geoengine.io/operators/gdalsource.html",
         "inputs": [
             {"name": "data", "type": "string"}
         ],
@@ -9,6 +10,7 @@
     },
     {
         "title": "OgrSource",
+        "helpUrl": "https://docs.geoengine.io/operators/ogrsource.html",
         "inputs": [
             {"name": "data", "type": "string"},
             {"name": "attributeProjection", "type": "array", "schema": {
@@ -85,6 +87,7 @@
     },
     {
         "title": "Expression",
+        "helpUrl": "https://docs.geoengine.io/operators/expression.html",
         "inputs": [
             {"name": "expression", "type": "string"},
             {"name": "outputType", "type": "string", "schema": {
@@ -155,6 +158,7 @@
     },
     {
         "title": "PointInPolygonFilter",
+        "helpUrl": "https://docs.geoengine.io/operators/pointinpolygon.html",
         "inputs": [
             {"name": "points", "type": "vector"},
             {"name": "polygons", "type": "vector"}
@@ -164,6 +168,7 @@
     },
     {
         "title": "Reprojection",
+        "helpUrl": "https://docs.geoengine.io/operators/reprojection.html",
         "inputs": [
             {"name": "targetSpatialReference", "type": "string"},
             {"name": "source", "type": "raster,vector"}
@@ -173,6 +178,7 @@
     },
     {
         "title": "Rgb",
+        "helpUrl": "https://docs.geoengine.io/operators/rgb.html",
         "inputs": [
             {"name": "redMin", "type": "number"},
             {"name": "redMax", "type": "number"},
@@ -204,6 +210,7 @@
     },
     {
         "title": "LineSimplification",
+        "helpUrl": "https://docs.geoengine.io/operators/linesimplification.html",
         "inputs": [
             {"name": "algorithm", "type": "string", "schema": {
                 "type": "string",
@@ -217,6 +224,7 @@
     },
     {
         "title": "TemporalRasterAggregation",
+        "helpUrl": "https://docs.geoengine.io/operators/temporalrasteraggregation.html",
         "inputs": [
             {"name": "aggregation", "type": "object", "schema": {
                 "type": "object",
@@ -260,6 +268,7 @@
     },
     {
         "title": "RasterVectorJoin",
+        "helpUrl": "https://docs.geoengine.io/operators/rastervectorjoin.html",
         "inputs": [
             {"name": "names", "type": "array", "schema": {
                 "type": "array",
@@ -290,6 +299,7 @@
     },
     {
         "title": "BoxPlot",
+        "helpUrl": "https://docs.geoengine.io/plots/boxplot.html",
         "inputs": [
             {"name": "columnNames", "type": "array", "schema": {
                 "description": "Name of the (numeric) attributes to compute the box plots on.",

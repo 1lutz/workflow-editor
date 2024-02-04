@@ -1,9 +1,13 @@
-import {INodeOutputSlot, LGraphNode, LiteGraph} from "litegraph.js";
+import {ContextMenuItem, INodeOutputSlot, LGraphNode, LiteGraph} from "litegraph.js";
 import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY} from "./constants";
 
 function isSource(input: WorkflowOperatorInput): boolean {
     return input.forceAsSource || input.type.includes("raster") || input.type.includes("vector") || input.type.includes("plot");
+}
+
+function openInNewTab(url: string) {
+    window.open(url, "_blank");//?.focus();
 }
 
 export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
@@ -115,6 +119,20 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
                 }
             }
             this.setOutputData(0, res);
+        }
+
+        getExtraMenuOptions(): ContextMenuItem[] {
+            let extras: ContextMenuItem[] = [];
+
+            if (object.helpUrl) {
+                extras.push({
+                    content: "Online Help",
+                    callback: function() {
+                        openInNewTab(object.helpUrl!);
+                    }
+                });
+            }
+            return extras;
         }
 
         getInputSchema(slot: number): object | undefined {

@@ -31,6 +31,7 @@ class WorkflowOperatorDefinition(traitlets.TraitType[G, S]):
             if (
                 "title" in value and isinstance(value["title"], str) and
                 ("desc" not in value or isinstance(value["desc"], str)) and
+                ("helpUrl" not in value or isinstance(value["helpUrl"], str)) and  # noqa
                 WorkflowOperatorDefinition.__check_inputs(value.get("inputs")) and  # noqa
                 WorkflowOperatorDefinition.__check_required(value.get("required")) and  # noqa
                 value.get("outputType") in ["raster", "vector", "plot", "copyFromSource"]  # noqa
