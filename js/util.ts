@@ -32,7 +32,7 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
 
     class NewNode extends LGraphNode implements OperatorNodeInfo {
         static title = object.title;
-        static desc = object.desc || "Generated from object";
+        static desc = object.desc || "Workflow Operator";
         defaultBoxColor: string;
 
         constructor() {

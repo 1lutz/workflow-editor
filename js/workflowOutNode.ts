@@ -2,6 +2,8 @@ import {LGraphNode} from "litegraph.js";
 
 export default class WorkflowOutNode extends LGraphNode {
     static title = "Workflow Out";
+    static desc = "Data flowing into this block is exported as a workflow."
+
     defaultBoxColor: string;
 
     constructor() {
