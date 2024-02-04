@@ -128,6 +128,7 @@ class TypedJsonEditorModal {
 
 export default class TypedJsonEditorNode extends LGraphNode {
     static title = "Typed JSON Editor";
+    static desc = "Simplifies editing params of workflow operators with complex types.";
 
     private defaultBoxColor: string;
     private oldSchema?: object;
