@@ -1,4 +1,12 @@
-import {ContextMenuItem, INodeOutputSlot, LGraphNode, LiteGraph} from "litegraph.js";
+import {
+    ContextMenuItem,
+    INodeInputSlot,
+    INodeOutputSlot,
+    INodeSlot,
+    LGraphNode,
+    LiteGraph,
+    Vector2
+} from "litegraph.js";
 import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY} from "./constants";
 
@@ -126,13 +134,41 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
 
             if (object.helpUrl) {
                 extras.push({
-                    content: "Online Help",
+                    content: "Operator Help",
                     callback: function() {
                         openInNewTab(object.helpUrl!);
                     }
                 });
             }
             return extras;
+        }
+
+        getSlotMenuOptions(slot: INodeSlot): ContextMenuItem[] {
+            const slot2 = slot as unknown as {
+                input?: INodeInputSlot;
+                output?: INodeOutputSlot;
+                slot: number;
+                link_pos: Vector2;
+            };
+            const helpUrl = slot2.input && object.inputs![slot2.slot].helpUrl;
+            const isOutputConnected = Boolean(slot2.output?.links?.length);
+
+            if (helpUrl) {
+                return [{
+                    content: "Input Help",
+                    callback: function() {
+                        openInNewTab(helpUrl);
+                    }
+                }];
+            } else if (isOutputConnected) {
+                return [{
+                    content: "Disconnect Links",
+                    // @ts-ignore
+                    slot
+                }];
+            } else {
+                return [];
+            }
         }
 
         getInputSchema(slot: number): object | undefined {

@@ -12,6 +12,7 @@ type Workflow = {
 type WorkflowOperatorInput = {
     name: string,
     type: string,
+    helpUrl?: string,
     forceAsSource?: boolean,
     schema?: object
 }

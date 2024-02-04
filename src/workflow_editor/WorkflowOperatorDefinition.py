@@ -14,6 +14,7 @@ class WorkflowOperatorDefinition(traitlets.TraitType[G, S]):
             isinstance(o, dict) and
             "name" in o and isinstance(o["name"], str) and
             "type" in o and isinstance(o["type"], str) and
+            ("helpUrl" not in o or isinstance(o["helpUrl"], str)) and
             ("forceAsSource" not in o or isinstance(o["forceAsSource"], bool)) and  # noqa
             ("schema" not in o or isinstance(o["schema"], dict))
             for o in inputs

@@ -3,7 +3,7 @@
         "title": "GdalSource",
         "helpUrl": "https://docs.geoengine.io/operators/gdalsource.html",
         "inputs": [
-            {"name": "data", "type": "string"}
+            {"name": "data", "type": "string", "helpUrl": "https://docs.geoengine.io/geoengine/datasets.html"}
         ],
         "required": ["data"],
         "outputType": "raster"
@@ -12,7 +12,7 @@
         "title": "OgrSource",
         "helpUrl": "https://docs.geoengine.io/operators/ogrsource.html",
         "inputs": [
-            {"name": "data", "type": "string"},
+            {"name": "data", "type": "string", "helpUrl": "https://docs.geoengine.io/geoengine/datasets.html"},
             {"name": "attributeProjection", "type": "array", "schema": {
                 "title": "Attributes to select",
                 "type": "array",
@@ -20,7 +20,7 @@
                     "type": "string"
                 }
             }},
-            {"name": "attributeFilters", "type": "array", "schema": {
+            {"name": "attributeFilters", "type": "array", "helpUrl": "https://docs.geoengine.io/operators/ogrsource.html#attributefilter", "schema": {
                 "title": "Attribute Filters",
                 "type": "array",
                 "items": {
@@ -90,11 +90,11 @@
         "helpUrl": "https://docs.geoengine.io/operators/expression.html",
         "inputs": [
             {"name": "expression", "type": "string"},
-            {"name": "outputType", "type": "string", "schema": {
+            {"name": "outputType", "type": "string", "helpUrl": "https://docs.geoengine.io/datatypes/rasterdatatype.html", "schema": {
                 "type": "string",
                 "enum": ["U8", "U16", "U32", "U64", "I8", "I16", "I32", "I64", "F32", "F64"]
             }},
-            {"name": "outputMeasurement", "type": "object", "schema": {
+            {"name": "outputMeasurement", "type": "object", "helpUrl": "https://docs.geoengine.io/datatypes/measurement.html", "schema": {
                 "type": [
                     {
                         "type": "object",
@@ -170,7 +170,7 @@
         "title": "Reprojection",
         "helpUrl": "https://docs.geoengine.io/operators/reprojection.html",
         "inputs": [
-            {"name": "targetSpatialReference", "type": "string"},
+            {"name": "targetSpatialReference", "type": "string", "helpUrl": "https://epsg.io"},
             {"name": "source", "type": "raster,vector"}
         ],
         "required": ["targetSpatialReference", "source"],
@@ -226,7 +226,7 @@
         "title": "TemporalRasterAggregation",
         "helpUrl": "https://docs.geoengine.io/operators/temporalrasteraggregation.html",
         "inputs": [
-            {"name": "aggregation", "type": "object", "schema": {
+            {"name": "aggregation", "type": "object", "helpUrl": "https://docs.geoengine.io/operators/temporalrasteraggregation.html#aggregation", "schema": {
                 "type": "object",
                 "properties": {
                     "type": {
@@ -239,7 +239,7 @@
                 },
                 "required": ["type", "ignoreNoData"]
             }},
-            {"name": "window", "type": "object", "schema": {
+            {"name": "window", "type": "object", "helpUrl": "https://docs.geoengine.io/datatypes/timestep.html", "schema": {
                 "type": "object",
                 "properties": {
                     "granularity": {
@@ -253,11 +253,11 @@
                 },
                 "required": ["granularity", "step"]
             }},
-            {"name": "windowReference", "type": "string", "schema": {
+            {"name": "windowReference", "type": "string", "helpUrl": "https://docs.geoengine.io/datatypes/timeinstance.html", "schema": {
                 "type": "string",
                 "pattern": "^\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z)$"
             }},
-            {"name": "outputType", "type": "string", "schema": {
+            {"name": "outputType", "type": "string", "helpUrl": "https://docs.geoengine.io/datatypes/rasterdatatype.html", "schema": {
                 "type": "string",
                 "enum": ["U8", "U16", "U32", "U64", "I8", "I16", "I32", "I64", "F32", "F64"]
             }},
