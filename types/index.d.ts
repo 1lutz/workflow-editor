@@ -19,6 +19,7 @@ type WorkflowOperatorInput = {
 type WorkflowOperatorDefinition = {
     title: string,
     desc?: string,
+    helpUrl?: string,
     inputs?: WorkflowOperatorInput[],
     required?: string[],
     outputType: 'raster' | 'vector' | 'plot' | 'copyFromSource'
