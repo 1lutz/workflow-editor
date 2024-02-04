@@ -11,6 +11,7 @@ import {
     WORKFLOW_OUT_NODE_TYPE
 } from "./constants";
 import TypedJsonEditorNode from "./typedJsonEditorNode";
+import applyAllBugfixes from "./bugfixes";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
 interface WidgetModel {
@@ -35,6 +36,8 @@ export function render({model, el}: RenderContext<WidgetModel>) {
 
     let graph = new LGraph();
     let canvas = new LGraphCanvas(domCanvas, graph);
+    applyAllBugfixes();
+
     canvas.default_connection_color_byType = {
         number: "#7F7",
         string: "#77F",
