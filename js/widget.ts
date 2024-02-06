@@ -5,6 +5,8 @@ import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
 import {registerWorkflowOperator} from "./util";
 import WorkflowOutNode from "./workflowOutNode";
 import {
+    LGraphCanvas_CONFIG_OVERRIDES,
+    LiteGraph_CONFIG_OVERRIDES,
     OPERATOR_CATEGORY,
     PREDEFINED_NODE_TYPES,
     TYPED_JSON_EDITOR_NODE_TYPE,
@@ -36,18 +38,9 @@ export function render({model, el}: RenderContext<WidgetModel>) {
 
     let graph = new LGraph();
     let canvas = new LGraphCanvas(domCanvas, graph);
+    Object.assign(LiteGraph, LiteGraph_CONFIG_OVERRIDES);
+    Object.assign(canvas, LGraphCanvas_CONFIG_OVERRIDES);
     applyAllBugfixes();
-
-    canvas.default_connection_color_byType = {
-        number: "#7F7",
-        string: "#77F",
-        boolean: "#F77",
-    };
-    canvas.default_connection_color_byTypeOff = {
-        number: "#474",
-        string: "#447",
-        boolean: "#744",
-    };
 
     graph.addOutput("Workflow Out", "raster,vector,plot", null);
     LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
