@@ -8,10 +8,10 @@ import {
     Vector2
 } from "litegraph.js";
 import {validate} from "jsonschema";
-import {OPERATOR_CATEGORY} from "./constants";
+import {OPERATOR_CATEGORY, GEO_TYPES} from "./constants";
 
 function isSource(input: WorkflowOperatorInput): boolean {
-    return input.forceAsSource || input.type.includes("raster") || input.type.includes("vector") || input.type.includes("plot");
+    return input.forceAsSource || GEO_TYPES.some(sourceType => input.type.includes(sourceType));
 }
 
 function openInNewTab(url: string) {
@@ -19,11 +19,20 @@ function openInNewTab(url: string) {
 }
 
 export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
+    const nodeId = OPERATOR_CATEGORY + "/" + object.title;
     let needsToValidateInputs = Boolean(object.required && object.required.length);
     const simplifiedInputs = object.inputs && object.inputs.map(input => {
         if (input.schema) {
             needsToValidateInputs = true;
         }
+        input.type
+            .split(",")
+            .filter(singleType => GEO_TYPES.includes(singleType))
+            .forEach(singleGeoType => {
+                // @ts-ignore
+                let defaultOut: string[] = LiteGraph.slot_types_default_out[singleGeoType];
+                if (!defaultOut.includes(nodeId)) defaultOut.push(nodeId);
+            });
         return [input.name, input.type] as [string, string];
     });
     let simplifiedOutputType: string;
@@ -36,6 +45,10 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
     } else {
         // noinspection JSUnusedAssignment
         simplifiedOutputType = object.outputType;
+        // @ts-ignore
+        // noinspection JSMismatchedCollectionQueryUpdate
+        let defaultIn: string[] = LiteGraph.slot_types_default_in[object.outputType];
+        defaultIn.push(nodeId);
     }
 
     class NewNode extends LGraphNode implements OperatorNodeInfo {
@@ -135,7 +148,7 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
             if (object.helpUrl) {
                 extras.push({
                     content: "Operator Help",
-                    callback: function() {
+                    callback: function () {
                         openInNewTab(object.helpUrl!);
                     }
                 });
@@ -156,7 +169,7 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
             if (helpUrl) {
                 return [{
                     content: "Input Help",
-                    callback: function() {
+                    callback: function () {
                         openInNewTab(helpUrl);
                     }
                 }];
@@ -179,7 +192,8 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
             return Boolean(object.inputs && object.required && object.required.includes(object.inputs[slot]?.name));
         }
     }
-    LiteGraph.registerNodeType(OPERATOR_CATEGORY + "/" + object.title, NewNode);
+
+    LiteGraph.registerNodeType(nodeId, NewNode);
 }
 
 export function isOperatorNode(arg: any): arg is OperatorNodeInfo {
