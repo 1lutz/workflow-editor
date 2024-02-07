@@ -183,9 +183,20 @@ function fixCreateDefaultNodeForSlotFailsInStrictMode() {
 }
 
 /**
+ * Several LiteGraph nodes try to use a global clamp function but the library
+ * incorrectly defines it, so it cannot be called by the nodes by default.
+ */
+function fixMissingClamp() {
+    globalThis.clamp = function (v, a, b) {
+        return a > v ? a : b < v ? b : v;
+    };
+}
+
+/**
  * Automatically applies fixes to external components like LiteGraph.
  */
 export default function applyAllBugfixes() {
     fixSetArrayDoesNotWorkWithIndexZero();
     fixCreateDefaultNodeForSlotFailsInStrictMode();
+    fixMissingClamp();
 }
