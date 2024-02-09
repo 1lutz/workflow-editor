@@ -2,7 +2,7 @@ import type {RenderContext} from "@anywidget/types";
 import "litegraph.js/css/litegraph";
 import "./widget.css";
 import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
-import {registerWorkflowOperator} from "./util";
+import {registerWorkflowOperator} from "./operator";
 import WorkflowOutNode from "./workflowOutNode";
 import {
     LGraphCanvas_CONFIG_OVERRIDES,
