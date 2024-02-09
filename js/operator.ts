@@ -15,7 +15,7 @@ function isSource(input: WorkflowOperatorInput): boolean {
 }
 
 function openInNewTab(url: string) {
-    window.open(url, "_blank");//?.focus();
+    window.open(url, "_blank");
 }
 
 export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
