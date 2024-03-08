@@ -10,7 +10,7 @@ import {
 import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY, GEO_TYPES} from "./constants";
 
-function isSource(input: WorkflowOperatorInput): boolean {
+function isSource(input: OperatorDefinitionParam): boolean {
     return input.forceAsSource || GEO_TYPES.some(sourceType => input.type.includes(sourceType));
 }
 
@@ -18,7 +18,7 @@ function openInNewTab(url: string) {
     window.open(url, "_blank");
 }
 
-export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
+export function registerWorkflowOperator(object: OperatorDefinition) {
     const nodeId = OPERATOR_CATEGORY + "/" + object.title;
     let needsToValidateInputs = Boolean(object.required && object.required.length);
     const simplifiedInputs = object.inputs && object.inputs.map(input => {
@@ -38,22 +38,22 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
     let simplifiedOutputType: string;
     let inputSlotToCopyTypeFrom: undefined | number = undefined;
 
-    if (object.outputType === "copyFromSource") {
+    if (object.geo_type === "copyFromSource") {
         inputSlotToCopyTypeFrom = object.inputs!.findIndex(isSource);
         // noinspection JSUnusedAssignment
         simplifiedOutputType = object.inputs![inputSlotToCopyTypeFrom].type;
     } else {
         // noinspection JSUnusedAssignment
-        simplifiedOutputType = object.outputType;
+        simplifiedOutputType = object.geo_type;
         // @ts-ignore
         // noinspection JSMismatchedCollectionQueryUpdate
-        let defaultIn: string[] = LiteGraph.slot_types_default_in[object.outputType];
+        let defaultIn: string[] = LiteGraph.slot_types_default_in[object.geo_type];
         defaultIn.push(nodeId);
     }
 
     class NewNode extends LGraphNode implements OperatorNodeInfo {
         static title = object.title;
-        static desc = object.desc || "Workflow Operator";
+        static desc = object.description || "Workflow Operator";
         defaultBoxColor: string;
 
         constructor() {
@@ -145,11 +145,11 @@ export function registerWorkflowOperator(object: WorkflowOperatorDefinition) {
         getExtraMenuOptions(): ContextMenuItem[] {
             let extras: ContextMenuItem[] = [];
 
-            if (object.helpUrl) {
+            if (object.help_text) {
                 extras.push({
                     content: "Operator Help",
                     callback: function () {
-                        openInNewTab(object.helpUrl!);
+                        openInNewTab(object.help_text!);
                     }
                 });
             }

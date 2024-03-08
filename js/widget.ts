@@ -17,7 +17,7 @@ import applyAllBugfixes from "./bugfixes";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
 interface WidgetModel {
-    definitions: WorkflowOperatorDefinition[];
+    definitions: OperatorDefinition[];
     workflow: object;
 }
 
