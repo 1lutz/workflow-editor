@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft-04/schema",
+  "definitions": {
+    "GdalSource": {
+      "help_text": "https://docs.geoengine.io/operators/gdalsource.html",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "GdalSource"
+          ]
+        },
+        "params": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "string",
+              "help_text": "https://docs.geoengine.io/geoengine/datasets.html"
+            }
+          },
+          "required": [
+            "data"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "params"
+      ],
+      "geo_type": "raster"
+    },
+    "PointInPolygonFilter": {
+      "help_text": "https://docs.geoengine.io/operators/pointinpolygon.html",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "PointInPolygonFilter"
+          ]
+        },
+        "params": {
+          "type": "object"
+        },
+        "sources": {
+          "type": "object",
+          "properties": {
+            "points": {
+              "type": "object",
+              "geo_type": "vector"
+            },
+            "polygons": {
+              "type": "object",
+              "geo_type": "vector"
+            }
+          },
+          "required": ["points", "polygons"]
+        }
+      },
+      "required": ["type", "params", "sources"],
+      "geo_type": "vector"
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/definitions/GdalSource"
+    },
+    {
+      "$ref": "#/definitions/PointInPolygonFilter"
+    }
+  ]
+}
