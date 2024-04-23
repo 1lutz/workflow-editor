@@ -14,10 +14,12 @@ import {
 } from "./constants";
 import TypedJsonEditorNode from "./typedJsonEditorNode";
 import applyAllBugfixes from "./bugfixes";
+import {isDatatypeDefinition} from "./typeguards";
+import {getDefinitionName} from "./util";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
 interface WidgetModel {
-    definitions: OperatorDefinition[];
+    schema: EditorSchema;
     workflow: object;
 }
 
@@ -68,12 +70,12 @@ export function render({model, el}: RenderContext<WidgetModel>) {
     });
     el.appendChild(domButton);
 
-    const initialDefinitions = model.get("definitions");
+    const initialDefinitions = model.get("schema");
 
-    if (initialDefinitions && initialDefinitions.length) {
-        initialDefinitions.forEach(registerWorkflowOperator);
+    if (initialDefinitions) {
+        registerDefinitions(initialDefinitions);
     }
-    model.on("change:definitions", () => {
+    model.on("change:schema", () => {
         // @ts-ignore
         const registeredOperators = LiteGraph.getNodeTypesInCategory(OPERATOR_CATEGORY);
 
@@ -91,7 +93,25 @@ export function render({model, el}: RenderContext<WidgetModel>) {
             // @ts-ignore
             LiteGraph.unregisterNodeType(registeredOperator);
         }
-        const definitions = model.get("definitions");
-        definitions.forEach(registerWorkflowOperator);
+        const definitions = model.get("schema");
+        registerDefinitions(definitions);
     });
+}
+
+function registerDefinitions(schema: EditorSchema) {
+    let operators: { [operatorName: string]: OperatorDefinition } = {};
+    let outputTypes: { [operatorName: string]: string } = {};
+
+    for (const [key, definition] of Object.entries(schema.definitions)) {
+        if (isDatatypeDefinition(definition)) {
+            for (const ref of definition.oneOf) {
+                outputTypes[getDefinitionName(ref)] = key;
+            }
+        } else {
+            operators[key] = definition;
+        }
+    }
+    for (const [key, operator] of Object.entries(operators)) {
+        registerWorkflowOperator(operator, outputTypes[key]);
+    }
 }

@@ -7,8 +7,11 @@ import typing as t
 import requests
 import requests_file
 
-from workflow_editor.WorkflowOperatorDefinition import (
-    WorkflowOperatorDefinition
+from workflow_editor.OperatorDefinition import (
+    OperatorDefinition
+)
+from workflow_editor.DatatypeDefinition import (
+    DatatypeDefinition
 )
 
 try:
@@ -24,8 +27,13 @@ class WorkflowEditor(anywidget.AnyWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "widget.js"
     _css = pathlib.Path(__file__).parent / "static" / "widget.css"
 
-    definitions = traitlets.List(WorkflowOperatorDefinition())\
-        .tag(sync=True)  # type: traitlets.traitlets.List[WorkflowOperatorDefinition] # noqa
+    schema = traitlets.Dict(per_key_traits={
+        "definitions": traitlets.Dict(value_trait=traitlets.Union([
+            OperatorDefinition,
+            DatatypeDefinition
+        ]))
+    })\
+        .tag(sync=True)
     workflow = traitlets.Dict(
         default_value=None,
         allow_none=True,
@@ -33,5 +41,5 @@ class WorkflowEditor(anywidget.AnyWidget):
     )\
         .tag(sync=True)
 
-    def load_definitions_from(self, url: str):
-        self.definitions = session.get(url).json()
+    def load_schema_from(self, url: str):
+        self.schema = session.get(url).json()
