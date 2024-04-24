@@ -4,7 +4,7 @@ export function getDefinitionName(ref: JsonSchemaRef) {
     return ref.$ref.substring(14);
 }
 
-const metaOnlySchemaProps = ["title", "help_text", "type"];
+const metaOnlySchemaProps = ["id", "$schema", "title", "description", "type", "help_text"];
 
 export function hasSchemaRestrictions(schema: object) {
     for (const schemaKey in schema) {
