@@ -1,3 +1,5 @@
+import type {JsonSchemaRef} from "./editorSchema";
+
 export function getDefinitionName(ref: JsonSchemaRef) {
     return ref.$ref.substring(14);
 }
@@ -11,4 +13,22 @@ export function hasSchemaRestrictions(schema: object) {
         }
     }
     return false;
+}
+
+const cachedJsonFiles: {[url: string]: Promise<any>} = {};
+
+export function cachedJsonFetch(url: string) {
+    let file = cachedJsonFiles[url];
+
+    if (!file) {
+        file = fetch(url)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("HTTP error: " + res.status + " " + res.statusText);
+                }
+                return res.json();
+            });
+        cachedJsonFiles[url] = file;
+    }
+    return file;
 }

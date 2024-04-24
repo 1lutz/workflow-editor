@@ -1,3 +1,5 @@
+import type {DatatypeDefinition} from "./editorSchema";
+
 export function isOperatorNode(arg: any): arg is OperatorNodeInfo {
     return arg && typeof arg.getInputSchema === "function" && typeof arg.isInputRequired === "function";
 }

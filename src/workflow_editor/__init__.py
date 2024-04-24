@@ -7,13 +7,6 @@ import typing as t
 import requests
 import requests_file
 
-from workflow_editor.OperatorDefinition import (
-    OperatorDefinition
-)
-from workflow_editor.DatatypeDefinition import (
-    DatatypeDefinition
-)
-
 try:
     __version__ = importlib.metadata.version("workflow_editor")
 except importlib.metadata.PackageNotFoundError:
@@ -28,10 +21,7 @@ class WorkflowEditor(anywidget.AnyWidget):
     _css = pathlib.Path(__file__).parent / "static" / "widget.css"
 
     schema = traitlets.Dict(per_key_traits={
-        "definitions": traitlets.Dict(value_trait=traitlets.Union([
-            OperatorDefinition,
-            DatatypeDefinition
-        ]))
+        "definitions": traitlets.Dict()
     })\
         .tag(sync=True)
     workflow = traitlets.Dict(

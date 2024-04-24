@@ -1,4 +1,5 @@
-import type {RenderContext} from "@anywidget/types";
+import type {RenderContext, AnyModel} from "@anywidget/types";
+import type {OperatorDefinition} from "./editorSchema";
 import "litegraph.js/css/litegraph";
 import "./widget.css";
 import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
@@ -15,15 +16,16 @@ import {
 import TypedJsonEditorNode from "./typedJsonEditorNode";
 import applyAllBugfixes from "./bugfixes";
 import {isDatatypeDefinition} from "./typeguards";
-import {getDefinitionName} from "./util";
+import { getDefinitionName} from "./util";
+import {EditorSchema} from "./editorSchema";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
 interface WidgetModel {
-    schema: EditorSchema;
+    schema: object;
     workflow: object;
 }
 
-export function render({model, el}: RenderContext<WidgetModel>) {
+function createCanvas() {
     let domCanvas = document.createElement("canvas");
     domCanvas.classList.add("workflow_editor-canvas");
     domCanvas.width = 800;
@@ -32,23 +34,26 @@ export function render({model, el}: RenderContext<WidgetModel>) {
         //hide jupyter application contextmenu
         event.stopPropagation();
     })
+    return domCanvas;
+}
 
+function createContainer(domCanvas: HTMLCanvasElement) {
     let domLitegraphContainer = document.createElement("div");
     domLitegraphContainer.classList.add("litegraph");
     domLitegraphContainer.appendChild(domCanvas);
-    el.appendChild(domLitegraphContainer);
+    return domLitegraphContainer;
+}
 
+function createGraph(domCanvas: HTMLCanvasElement) {
     let graph = new LGraph();
     let canvas = new LGraphCanvas(domCanvas, graph);
     Object.assign(LiteGraph, LiteGraph_CONFIG_OVERRIDES);
     Object.assign(canvas, LGraphCanvas_CONFIG_OVERRIDES);
     applyAllBugfixes();
+    return graph;
+}
 
-    graph.addOutput("Workflow Out", "raster,vector,plot", null);
-    LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
-
-    LiteGraph.registerNodeType(TYPED_JSON_EDITOR_NODE_TYPE, TypedJsonEditorNode);
-
+function createExecuteButton(graph: LGraph, model: AnyModel<WidgetModel>) {
     let domButton = document.createElement("button");
     domButton.classList.add("workflow_editor-execute", "btn", "btn-outline-primary", "btn-sm");
     domButton.innerHTML = "Execute";
@@ -68,12 +73,46 @@ export function render({model, el}: RenderContext<WidgetModel>) {
             alert("Damit das Ergebnis eindeutig ist, darf es nur einen Ausgabeblock geben. Lösche überschüssige \"Workflow Out\"-Block.");
         }
     });
-    el.appendChild(domButton);
+    return domButton;
+}
 
-    const initialDefinitions = model.get("schema");
+async function registerDefinitions(file: object) {
+    const schema = await EditorSchema.parseAsync(file);
 
-    if (initialDefinitions) {
-        registerDefinitions(initialDefinitions);
+    let operators: { [operatorName: string]: OperatorDefinition } = {};
+    let outputTypes: { [operatorName: string]: string } = {};
+
+    for (const [key, definition] of Object.entries(schema.definitions)) {
+        if (isDatatypeDefinition(definition)) {
+            for (const ref of definition.oneOf) {
+                outputTypes[getDefinitionName(ref)] = key;
+            }
+        } else {
+            operators[key] = definition;
+        }
+    }
+    for (const [key, operator] of Object.entries(operators)) {
+        registerWorkflowOperator(operator, outputTypes[key]);
+    }
+}
+
+export function render({model, el}: RenderContext<WidgetModel>) {
+    const domCanvas = createCanvas();
+    const domLitegraphContainer = createContainer(domCanvas);
+    el.appendChild(domLitegraphContainer);
+
+    const graph = createGraph(domCanvas);
+    graph.addOutput("Workflow Out", "raster,vector,plot", null);
+    LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
+    LiteGraph.registerNodeType(TYPED_JSON_EDITOR_NODE_TYPE, TypedJsonEditorNode);
+
+    const domExecuteButton = createExecuteButton(graph, model);
+    el.appendChild(domExecuteButton);
+
+    const initialSchema = model.get("schema");
+
+    if (initialSchema) {
+        registerDefinitions(initialSchema);
     }
     model.on("change:schema", () => {
         // @ts-ignore
@@ -93,25 +132,7 @@ export function render({model, el}: RenderContext<WidgetModel>) {
             // @ts-ignore
             LiteGraph.unregisterNodeType(registeredOperator);
         }
-        const definitions = model.get("schema");
-        registerDefinitions(definitions);
+        const schema = model.get("schema");
+        registerDefinitions(schema);
     });
-}
-
-function registerDefinitions(schema: EditorSchema) {
-    let operators: { [operatorName: string]: OperatorDefinition } = {};
-    let outputTypes: { [operatorName: string]: string } = {};
-
-    for (const [key, definition] of Object.entries(schema.definitions)) {
-        if (isDatatypeDefinition(definition)) {
-            for (const ref of definition.oneOf) {
-                outputTypes[getDefinitionName(ref)] = key;
-            }
-        } else {
-            operators[key] = definition;
-        }
-    }
-    for (const [key, operator] of Object.entries(operators)) {
-        registerWorkflowOperator(operator, outputTypes[key]);
-    }
 }
