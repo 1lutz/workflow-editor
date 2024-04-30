@@ -5,10 +5,10 @@ build-backend = "hatchling.build"
 [project]
 name = "workflow_editor"
 version = "0.0.0"
-dependencies = ["anywidget", "requests-file"]
+dependencies = ["anywidget"]
 
 [project.optional-dependencies]
-dev = ["watchfiles", "jupyterlab", "mypy", "pycodestyle", "types-requests"]
+dev = ["watchfiles", "jupyterlab", "mypy", "pycodestyle"]
 
 # automatically add the dev feature to the default env (e.g., hatch shell)
 [tool.hatch.envs.default]

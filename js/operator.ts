@@ -10,7 +10,7 @@ import {
 import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY} from "./constants";
 import {getDefinitionName, hasSchemaRestrictions} from "./util";
-import type {OperatorDefinition} from "./editorSchema";
+import type {OperatorDefinition} from "./operatorDefinitions";
 
 function openInNewTab(url: string) {
     window.open(url, "_blank");

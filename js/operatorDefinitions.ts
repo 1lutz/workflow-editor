@@ -46,11 +46,11 @@ const DatatypeDefinition = z.object({
 
 export type DatatypeDefinition = z.infer<typeof DatatypeDefinition>;
 
-export const EditorSchema = z.object({
+export const OperatorDefinitions = z.object({
     definitions: z.record(z.string(), z.union([OperatorDefinition, DatatypeDefinition]))
 }).refine(async (editorSchema) => {
     const jsonSchema = await cachedJsonFetch(JSON_SCHEMA_URL);
     return validate(editorSchema, jsonSchema).valid;
-}, "The operator definition file must be valid according to json schema draft 4");
+}, "The operator definition file must be valid json schema");
 
-export type EditorSchema = z.infer<typeof EditorSchema>;
+export type OperatorDefinitions = z.infer<typeof OperatorDefinitions>;
