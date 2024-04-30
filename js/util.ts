@@ -1,4 +1,4 @@
-import type {JsonSchemaRef} from "./editorSchema";
+import type {JsonSchemaRef} from "./operatorDefinitions";
 
 export function getDefinitionName(ref: JsonSchemaRef) {
     return ref.$ref.substring(14);

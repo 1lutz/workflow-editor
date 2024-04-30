@@ -4,26 +4,19 @@ import pathlib
 import anywidget
 import traitlets
 import typing as t
-import requests
-import requests_file
 
 try:
     __version__ = importlib.metadata.version("workflow_editor")
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 
-session = requests.Session()
-session.mount('file://', requests_file.FileAdapter())
-
 
 class WorkflowEditor(anywidget.AnyWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "widget.js"
     _css = pathlib.Path(__file__).parent / "static" / "widget.css"
 
-    schema = traitlets.Dict(per_key_traits={
-        "definitions": traitlets.Dict()
-    })\
-        .tag(sync=True)
+    serverUrl = traitlets.Unicode().tag(sync=True)
+    token = traitlets.Unicode().tag(sync=True)
     workflow = traitlets.Dict(
         default_value=None,
         allow_none=True,
@@ -31,5 +24,7 @@ class WorkflowEditor(anywidget.AnyWidget):
     )\
         .tag(sync=True)
 
-    def load_schema_from(self, url: str):
-        self.schema = session.get(url).json()
+    def __init__(self, serverUrl, token):
+        super().__init__()
+        self.serverUrl = serverUrl
+        self.token = token

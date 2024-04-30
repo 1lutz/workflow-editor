@@ -10,7 +10,9 @@ export const TYPED_JSON_EDITOR_MODAL_ID = "workflow_editor-typed_editor_modal";
 
 export const TYPED_JSON_EDITOR_HOLDER_ID = "workflow_editor-typed_editor_holder";
 
-export const JSON_SCHEMA_URL = "https://json-schema.org/draft-04/schema";
+export const JSON_SCHEMA_URL = "https://json-schema.org/draft-07/schema";
+
+export const WORKFLOW_SCHEMA_URL = "/workflow/schema";
 
 export const LiteGraph_CONFIG_OVERRIDES = {
     release_link_on_empty_shows_menu: true,

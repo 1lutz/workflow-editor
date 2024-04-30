@@ -1,5 +1,5 @@
 import type {RenderContext, AnyModel} from "@anywidget/types";
-import type {OperatorDefinition} from "./editorSchema";
+import type {OperatorDefinition} from "./operatorDefinitions";
 import "litegraph.js/css/litegraph";
 import "./widget.css";
 import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
@@ -11,18 +11,20 @@ import {
     OPERATOR_CATEGORY,
     PREDEFINED_NODE_TYPES,
     TYPED_JSON_EDITOR_NODE_TYPE,
-    WORKFLOW_OUT_NODE_TYPE
+    WORKFLOW_OUT_NODE_TYPE,
+    WORKFLOW_SCHEMA_URL
 } from "./constants";
 import TypedJsonEditorNode from "./typedJsonEditorNode";
 import applyAllBugfixes from "./bugfixes";
 import {isDatatypeDefinition} from "./typeguards";
-import { getDefinitionName} from "./util";
-import {EditorSchema} from "./editorSchema";
+import {getDefinitionName} from "./util";
+import {OperatorDefinitions} from "./operatorDefinitions";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
 interface WidgetModel {
-    schema: object;
-    workflow: object;
+    serverUrl: string;
+    token: string;
+    workflow?: object;
 }
 
 function createCanvas() {
@@ -76,8 +78,9 @@ function createExecuteButton(graph: LGraph, model: AnyModel<WidgetModel>) {
     return domButton;
 }
 
-async function registerDefinitions(file: object) {
-    const schema = await EditorSchema.parseAsync(file);
+async function registerDefinitions(serverUrl: string) {
+    const file = await (await fetch(serverUrl + WORKFLOW_SCHEMA_URL)).json();
+    const schema = await OperatorDefinitions.parseAsync(file);
 
     let operators: { [operatorName: string]: OperatorDefinition } = {};
     let outputTypes: { [operatorName: string]: string } = {};
@@ -109,10 +112,10 @@ export function render({model, el}: RenderContext<WidgetModel>) {
     const domExecuteButton = createExecuteButton(graph, model);
     el.appendChild(domExecuteButton);
 
-    const initialSchema = model.get("schema");
+    const initialServerUrl = model.get("serverUrl");
 
-    if (initialSchema) {
-        registerDefinitions(initialSchema);
+    if (initialServerUrl) {
+        registerDefinitions(initialServerUrl);
     }
     model.on("change:schema", () => {
         // @ts-ignore
@@ -132,7 +135,20 @@ export function render({model, el}: RenderContext<WidgetModel>) {
             // @ts-ignore
             LiteGraph.unregisterNodeType(registeredOperator);
         }
-        const schema = model.get("schema");
-        registerDefinitions(schema);
+        const serverUrl = model.get("serverUrl");
+        registerDefinitions(serverUrl);
     });
+}
+
+export function renderPlainModel({model, el}: { model: WidgetModel, el: HTMLElement }) {
+    const modelWrapper = {
+        get<K extends keyof WidgetModel>(key: K): WidgetModel[K] {
+            return model[key];
+        },
+        on() {
+            // No implementation needed because the
+            // model passed to this method is constant.
+        }
+    } as unknown as AnyModel<WidgetModel>;
+    render({model: modelWrapper, el});
 }
