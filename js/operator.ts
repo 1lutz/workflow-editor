@@ -9,7 +9,7 @@ import {
 } from "litegraph.js";
 import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY, RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
-import {getDefinitionName, hasSchemaRestrictions} from "./util";
+import {getBackend, getDefinitionName, hasSchemaRestrictions} from "./util";
 import type {OperatorDefinition} from "./operatorDefinitions";
 import {Backend} from "./backend";
 import {OperatorDefinitionParam} from "./operatorDefinitions";
@@ -99,8 +99,7 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
 
         async onExecute() {
             const that = this;
-            // @ts-ignore
-            const backend = that.graph.backend;
+            const backend = getBackend(that.graph!);
 
             if (needsToValidateInputs) {
                 let isValid = true;

@@ -2,6 +2,7 @@ import type {RenderContext, AnyModel} from "@anywidget/types";
 import type {OperatorDefinition} from "./operatorDefinitions";
 import "litegraph.js/css/litegraph";
 import "./widget.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
 import {registerWorkflowOperator} from "./operator";
 import WorkflowOutNode from "./workflowOutNode";
@@ -18,6 +19,7 @@ import applyAllBugfixes from "./bugfixes";
 import {isDatatypeDefinition} from "./typeguards";
 import {getDefinitionName} from "./util";
 import {Backend} from "./backend";
+import {ValidationSummary} from "./validationSummary";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
 interface WidgetModel {
@@ -114,6 +116,11 @@ export function render({model, el}: RenderContext<WidgetModel>) {
     LiteGraph.registerNodeType(TYPED_JSON_EDITOR_NODE_TYPE, TypedJsonEditorNode);
 
     el.appendChild(createExportButton(graph, model));
+
+    const validationSummary = new ValidationSummary();
+    // @ts-ignore
+    graph.validationSummary = validationSummary;
+    el.appendChild(validationSummary.createContainer());
 
     const initialServerUrl = model.get("serverUrl");
     const initalToken = model.get("token");

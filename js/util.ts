@@ -1,5 +1,8 @@
 import type {JsonSchemaRef, OperatorDefinitionParam} from "./operatorDefinitions";
 import {RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
+import {LGraph} from "litegraph.js";
+import {Backend} from "./backend";
+import {ValidationSummary} from "./validationSummary";
 
 export function getDefinitionName(ref: JsonSchemaRef) {
     return ref.$ref.substring(14);
@@ -39,4 +42,14 @@ export function cachedCheckedJsonFetch(url: string) {
         cachedJsonFiles[url] = file;
     }
     return file;
+}
+
+export function getBackend(graph: LGraph): Backend {
+    // @ts-ignore
+    return graph.backend;
+}
+
+export function getValidationSummary(graph: LGraph): ValidationSummary {
+    // @ts-ignore
+    return graph.validationSummary;
 }
