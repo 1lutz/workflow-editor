@@ -2,7 +2,6 @@ import {INodeInputSlot, LGraphNode} from "litegraph.js";
 // @ts-ignore
 import {JSONEditor} from "@json-editor/json-editor/dist/jsoneditor.js"
 import {Modal} from "bootstrap";
-import "bootstrap/dist/css/bootstrap.min.css";
 import {TYPED_JSON_EDITOR_HOLDER_ID, TYPED_JSON_EDITOR_MODAL_ID} from "./constants";
 
 import {isOperatorNode} from "./typeguards";
