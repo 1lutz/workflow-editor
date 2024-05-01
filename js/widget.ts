@@ -11,14 +11,13 @@ import {
     OPERATOR_CATEGORY,
     PREDEFINED_NODE_TYPES,
     TYPED_JSON_EDITOR_NODE_TYPE,
-    WORKFLOW_OUT_NODE_TYPE,
-    WORKFLOW_SCHEMA_URL
+    WORKFLOW_OUT_NODE_TYPE
 } from "./constants";
 import TypedJsonEditorNode from "./typedJsonEditorNode";
 import applyAllBugfixes from "./bugfixes";
 import {isDatatypeDefinition} from "./typeguards";
 import {getDefinitionName} from "./util";
-import {OperatorDefinitions} from "./operatorDefinitions";
+import {Backend} from "./backend";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
 interface WidgetModel {
@@ -55,13 +54,13 @@ function createGraph(domCanvas: HTMLCanvasElement) {
     return graph;
 }
 
-function createExecuteButton(graph: LGraph, model: AnyModel<WidgetModel>) {
+function createExportButton(graph: LGraph, model: AnyModel<WidgetModel>) {
     let domButton = document.createElement("button");
-    domButton.classList.add("workflow_editor-execute", "btn", "btn-outline-primary", "btn-sm");
-    domButton.innerHTML = "Execute";
-    domButton.addEventListener("click", () => {
+    domButton.classList.add("workflow_editor-export", "btn", "btn-outline-primary", "btn-sm");
+    domButton.innerHTML = "Export";
+    domButton.addEventListener("click", async () => {
         graph.setOutputData("Workflow Out", null);
-        graph.runStep();
+        await graph.runStepAsync();
         graph.setDirtyCanvas(true, false);
         const workflow = graph.getOutputData("Workflow Out");
         model.set("workflow", workflow);
@@ -78,9 +77,15 @@ function createExecuteButton(graph: LGraph, model: AnyModel<WidgetModel>) {
     return domButton;
 }
 
-async function registerDefinitions(serverUrl: string) {
-    const file = await (await fetch(serverUrl + WORKFLOW_SCHEMA_URL)).json();
-    const schema = await OperatorDefinitions.parseAsync(file);
+function registerBackend(serverUrl: string, token: string, graph: LGraph) {
+    const backend = new Backend(serverUrl, token);
+    // @ts-ignore
+    graph.backend = backend;
+    return backend;
+}
+
+async function registerDefinitions(backend: Backend) {
+    const schema = await backend.fetchOperatorDefinitions();
 
     let operators: { [operatorName: string]: OperatorDefinition } = {};
     let outputTypes: { [operatorName: string]: string } = {};
@@ -101,23 +106,23 @@ async function registerDefinitions(serverUrl: string) {
 
 export function render({model, el}: RenderContext<WidgetModel>) {
     const domCanvas = createCanvas();
-    const domLitegraphContainer = createContainer(domCanvas);
-    el.appendChild(domLitegraphContainer);
+    el.appendChild(createContainer(domCanvas));
 
     const graph = createGraph(domCanvas);
     graph.addOutput("Workflow Out", "raster,vector,plot", null);
     LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
     LiteGraph.registerNodeType(TYPED_JSON_EDITOR_NODE_TYPE, TypedJsonEditorNode);
 
-    const domExecuteButton = createExecuteButton(graph, model);
-    el.appendChild(domExecuteButton);
+    el.appendChild(createExportButton(graph, model));
 
     const initialServerUrl = model.get("serverUrl");
+    const initalToken = model.get("token");
 
-    if (initialServerUrl) {
-        registerDefinitions(initialServerUrl);
+    if (initialServerUrl && initalToken) {
+        const backend = registerBackend(initialServerUrl, initalToken, graph);
+        registerDefinitions(backend);
     }
-    model.on("change:schema", () => {
+    model.on("change:serverUrl", () => {
         // @ts-ignore
         const registeredOperators = LiteGraph.getNodeTypesInCategory(OPERATOR_CATEGORY);
 
@@ -136,7 +141,9 @@ export function render({model, el}: RenderContext<WidgetModel>) {
             LiteGraph.unregisterNodeType(registeredOperator);
         }
         const serverUrl = model.get("serverUrl");
-        registerDefinitions(serverUrl);
+        const token = model.get("token");
+        const backend = registerBackend(serverUrl, token, graph);
+        registerDefinitions(backend);
     });
 }
 

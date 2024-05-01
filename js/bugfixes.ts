@@ -1,7 +1,8 @@
 // @ts-nocheck
 // noinspection PointlessBooleanExpressionJS,JSDuplicatedDeclaration
 
-import {LGraphCanvas, LiteGraph} from "litegraph.js";
+import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
+import {isPromise} from "./typeguards";
 
 /**
  * The built-in "Set Array" node can't set the first index of an array,
@@ -192,6 +193,75 @@ function fixMissingClamp() {
     };
 }
 
+function addRunStepAsync() {
+    LGraph.prototype.runStepAsync = async function () {
+        const start = LiteGraph.getTime();
+        this.globaltime = 0.001 * (start - this.starttime);
+
+        //not optimal: executes possible pending actions in node, problem is it is not optimized
+        //it is done here as if it was done in the later loop it wont be called in the node missed the onExecute
+
+        //from now on it will iterate only on executable nodes which is faster
+        const nodes = this._nodes_executable
+            ? this._nodes_executable
+            : this._nodes;
+        if (!nodes) {
+            return;
+        }
+
+        const limit = nodes.length;
+
+        try {
+            //iterations
+            for (var j = 0; j < limit; ++j) {
+                var node = nodes[j];
+                if (LiteGraph.use_deferred_actions && node._waiting_actions && node._waiting_actions.length)
+                    node.executePendingActions();
+                if (node.mode == LiteGraph.ALWAYS && node.onExecute) {
+                    const res = node.onExecute() as void | Promise<void>;
+
+                    if (isPromise(res)) {
+                        await res;
+                    }
+                }
+            }
+
+            this.fixedtime += this.fixedtime_lapse;
+            if (this.onExecuteStep) {
+                this.onExecuteStep();
+            }
+
+            if (this.onAfterExecute) {
+                this.onAfterExecute();
+            }
+            this.errors_in_execution = false;
+        } catch (err) {
+            this.errors_in_execution = true;
+            if (LiteGraph.throw_errors) {
+                throw err;
+            }
+            if (LiteGraph.debug) {
+                console.log("Error during execution: " + err);
+            }
+            this.stop();
+        }
+
+        var now = LiteGraph.getTime();
+        var elapsed = now - start;
+        if (elapsed == 0) {
+            elapsed = 1;
+        }
+        this.execution_time = 0.001 * elapsed;
+        this.globaltime += 0.001 * elapsed;
+        this.iteration += 1;
+        this.elapsed_time = (now - this.last_update_time) * 0.001;
+        this.last_update_time = now;
+        this.nodes_executing = [];
+        this.nodes_actioning = [];
+        this.nodes_executedAction = [];
+    };
+}
+
 /**
  * Automatically applies fixes to external components like LiteGraph.
  */
@@ -199,4 +269,5 @@ export default function applyAllBugfixes() {
     fixSetArrayDoesNotWorkWithIndexZero();
     fixCreateDefaultNodeForSlotFailsInStrictMode();
     fixMissingClamp();
+    addRunStepAsync();
 }

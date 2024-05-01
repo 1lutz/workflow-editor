@@ -8,12 +8,39 @@ import {
     Vector2
 } from "litegraph.js";
 import {validate} from "jsonschema";
-import {OPERATOR_CATEGORY} from "./constants";
+import {OPERATOR_CATEGORY, RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
 import {getDefinitionName, hasSchemaRestrictions} from "./util";
 import type {OperatorDefinition} from "./operatorDefinitions";
+import {Backend} from "./backend";
+import {OperatorDefinitionParam} from "./operatorDefinitions";
+import {DatasetType} from "./backend";
 
 function openInNewTab(url: string) {
     window.open(url, "_blank");
+}
+
+export async function customValidationOk(backend: Backend, instance: unknown, schema?: OperatorDefinitionParam) {
+    try {
+        if (schema?.format === RASTER_REF_FORMAT) {
+            return typeof instance === "string" && await backend.getDatasetType(instance) === DatasetType.Raster;
+        }
+        if (schema?.format === VECTOR_REF_FORMAT) {
+            return typeof instance === "string" && await backend.getDatasetType(instance) === DatasetType.Vector;
+        }
+    } catch (err) {
+        console.log("Error during custom validation of \"" + instance + "\" with", schema, ":", err);
+        return false;
+    }
+    return true;
+}
+
+type SimplifiedInputInfo = {
+    name: string,
+    type: string,
+    required: boolean,
+    schema?: OperatorDefinitionParam,
+    isSource: boolean,
+    help_text?: string
 }
 
 export function registerWorkflowOperator(object: OperatorDefinition, outputType: string) {
@@ -70,13 +97,15 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
             this.addOutput("out", outputType);
         }
 
-        onExecute() {
+        async onExecute() {
             const that = this;
+            // @ts-ignore
+            const backend = that.graph.backend;
 
             if (needsToValidateInputs) {
                 let isValid = true;
 
-                function validateInput(inIndex: number) {
+                async function validateInput(inIndex: number) {
                     const inputInfo = simplifiedInputs[inIndex];
                     const checkSet = inputInfo.required;
                     const checkSchema = Boolean(inputInfo.schema);
@@ -87,7 +116,7 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
                         if (checkSet && instance === undefined) {
                             return false;
                         }
-                        if (checkSchema && !validate(instance, inputInfo.schema).valid) {
+                        if (checkSchema && (!validate(instance, inputInfo.schema).valid || !await customValidationOk(backend, instance, inputInfo.schema))) {
                             return false;
                         }
                     }
@@ -95,7 +124,7 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
                 }
 
                 for (let i = 0; i < simplifiedInputs.length; i++) {
-                    if (!validateInput(i)) {
+                    if (!await validateInput(i)) {
                         isValid = false;
                         break;
                     }
