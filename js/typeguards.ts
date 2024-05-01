@@ -7,3 +7,7 @@ export function isOperatorNode(arg: any): arg is OperatorNodeInfo {
 export function isDatatypeDefinition(arg: any): arg is DatatypeDefinition {
     return arg && typeof arg.oneOf === "object";
 }
+
+export function isPromise(arg: any): arg is Promise<any> {
+    return typeof arg === "object" && typeof arg.then === "function";
+}

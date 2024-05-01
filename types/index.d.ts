@@ -9,17 +9,8 @@ type Workflow = {
     operator: WorkflowOperator
 }
 
-type SimplifiedInputInfo = {
-    name: string,
-    type: string,
-    required: boolean,
-    schema?: object,
-    isSource: boolean,
-    help_text?: string
-}
-
 interface OperatorNodeInfo {
-    getInputSchema(slot: number): object | undefined;
+    getInputSchema(slot: number): any | undefined;
 
     isInputRequired(slot: number): boolean;
 }

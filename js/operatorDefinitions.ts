@@ -1,5 +1,5 @@
 import { z } from "zod";
-import {cachedJsonFetch} from "./util";
+import {cachedCheckedJsonFetch} from "./util";
 import {JSON_SCHEMA_URL} from "./constants";
 import {validate} from "jsonschema";
 
@@ -11,8 +11,11 @@ export type JsonSchemaRef = z.infer<typeof JsonSchemaRef>;
 
 const OperatorDefinitionParam = z.object({
     type: z.string(),
-    help_text: z.string().optional()
+    help_text: z.string().optional(),
+    format: z.string().optional()
 }).passthrough();
+
+export type OperatorDefinitionParam = z.infer<typeof OperatorDefinitionParam>;
 
 const OperatorDefinitionParams = z.object({
     properties: z.record(z.string(), OperatorDefinitionParam),
@@ -49,7 +52,7 @@ export type DatatypeDefinition = z.infer<typeof DatatypeDefinition>;
 export const OperatorDefinitions = z.object({
     definitions: z.record(z.string(), z.union([OperatorDefinition, DatatypeDefinition]))
 }).refine(async (editorSchema) => {
-    const jsonSchema = await cachedJsonFetch(JSON_SCHEMA_URL);
+    const jsonSchema = await cachedCheckedJsonFetch(JSON_SCHEMA_URL);
     return validate(editorSchema, jsonSchema).valid;
 }, "The operator definition file must be valid json schema");
 
