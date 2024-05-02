@@ -5,6 +5,10 @@
 	box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .30);
 }
 
+.workflow_editor-validation {
+	margin-top: 1rem;
+}
+
 .je-switcher {
 	min-width: 150px;
 }

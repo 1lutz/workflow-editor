@@ -9,29 +9,28 @@ import {
 } from "litegraph.js";
 import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY, RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
-import {getBackend, getDefinitionName, hasSchemaRestrictions} from "./util";
+import {getBackend, getDefinitionName, getValidationSummary, hasSchemaRestrictions} from "./util";
 import type {OperatorDefinition} from "./operatorDefinitions";
-import {Backend} from "./backend";
 import {OperatorDefinitionParam} from "./operatorDefinitions";
-import {DatasetType} from "./backend";
+import {Backend, DatasetType} from "./backend";
 
 function openInNewTab(url: string) {
     window.open(url, "_blank");
 }
 
-export async function customValidationOk(backend: Backend, instance: unknown, schema?: OperatorDefinitionParam) {
+export async function customValidationOk(backend: Backend, instance: any, schema?: OperatorDefinitionParam): Promise<string | null> {
     try {
         if (schema?.format === RASTER_REF_FORMAT) {
-            return typeof instance === "string" && await backend.getDatasetType(instance) === DatasetType.Raster;
+            return await backend.ensureDatasetType(instance, DatasetType.Raster);
         }
         if (schema?.format === VECTOR_REF_FORMAT) {
-            return typeof instance === "string" && await backend.getDatasetType(instance) === DatasetType.Vector;
+            return await backend.ensureDatasetType(instance, DatasetType.Vector);
         }
     } catch (err) {
-        console.log("Error during custom validation of \"" + instance + "\" with", schema, ":", err);
-        return false;
+        //return "Error during custom validation of \"" + instance + "\" with", schema, ":", err;
+        return `Ein Fehler ist beim Validieren von "${JSON.stringify(instance)}" gegen das Schema ${JSON.stringify(schema, null, 4)} aufgetreten: ${err.message}`;
     }
-    return true;
+    return null;
 }
 
 type SimplifiedInputInfo = {
@@ -100,6 +99,7 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
         async onExecute() {
             const that = this;
             const backend = getBackend(that.graph!);
+            const validationSummary = getValidationSummary(this.graph!);
 
             if (needsToValidateInputs) {
                 let isValid = true;
@@ -113,10 +113,24 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
                         const instance = that.getInputData(inIndex);
 
                         if (checkSet && instance === undefined) {
+                            validationSummary.addError(NewNode.title, `Der Parameter "${inputInfo.name}" erwartet Daten, es wurden aber keine eingegeben.`);
                             return false;
                         }
-                        if (checkSchema && (!validate(instance, inputInfo.schema).valid || !await customValidationOk(backend, instance, inputInfo.schema))) {
-                            return false;
+                        if (checkSchema) {
+                            const schemaValidationRes = validate(instance, inputInfo.schema);
+
+                            if (!schemaValidationRes.valid) {
+                                for (const error of schemaValidationRes.errors) {
+                                    validationSummary.addError(NewNode.title, JSON.stringify(error)); // TODO
+                                }
+                                return false;
+                            }
+                            const customErrorMessage = await customValidationOk(backend, instance, inputInfo.schema);
+
+                            if (typeof customErrorMessage === "string") {
+                                validationSummary.addError(NewNode.title, customErrorMessage);
+                                return false;
+                            }
                         }
                     }
                     return true;

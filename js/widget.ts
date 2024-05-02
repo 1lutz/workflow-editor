@@ -17,7 +17,7 @@ import {
 import TypedJsonEditorNode from "./typedJsonEditorNode";
 import applyAllBugfixes from "./bugfixes";
 import {isDatatypeDefinition} from "./typeguards";
-import {getDefinitionName} from "./util";
+import {getDefinitionName, getValidationSummary} from "./util";
 import {Backend} from "./backend";
 import {ValidationSummary} from "./validationSummary";
 
@@ -61,22 +61,38 @@ function createExportButton(graph: LGraph, model: AnyModel<WidgetModel>) {
     domButton.classList.add("workflow_editor-export", "btn", "btn-outline-primary", "btn-sm");
     domButton.innerHTML = "Export";
     domButton.addEventListener("click", async () => {
-        graph.setOutputData("Workflow Out", null);
+        graph.setOutputData(WorkflowOutNode.title, null);
         await graph.runStepAsync();
         graph.setDirtyCanvas(true, false);
-        const workflow = graph.getOutputData("Workflow Out");
+        const workflow = graph.getOutputData(WorkflowOutNode.title);
         model.set("workflow", workflow);
         model.save_changes();
 
         const workflowOutCount = graph.findNodesByType(WORKFLOW_OUT_NODE_TYPE).length;
+        const validationSummary = getValidationSummary(graph);
 
         if (workflowOutCount === 0) {
-            alert("Es muss ein Ausgabeblock vorhanden sein. Füge dem Graphen einen \"Workflow Out\"-Block hinzu und verbinde ihn mit einem Operator, zum Beispiel \"GdalSource\".");
+            validationSummary.addError("Allgemein", `Es muss ein Ausgabeblock vorhanden sein. Füge dem Graphen einen ${WorkflowOutNode.title}-Block hinzu und verbinde ihn mit einem Operator, zum Beispiel "GdalSource".`);
         } else if (workflowOutCount > 1) {
-            alert("Damit das Ergebnis eindeutig ist, darf es nur einen Ausgabeblock geben. Lösche überschüssige \"Workflow Out\"-Block.");
+            validationSummary.addError("Allgemein", `Damit das Ergebnis eindeutig ist, darf es nur einen Ausgabeblock geben. Lösche überschüssige ${WorkflowOutNode.title}-Block.`);
         }
+        validationSummary.render();
     });
     return domButton;
+}
+
+function createUI(model: AnyModel<WidgetModel>, el: HTMLElement) {
+    const domCanvas = createCanvas();
+    el.appendChild(createContainer(domCanvas));
+    const graph = createGraph(domCanvas);
+    el.appendChild(createExportButton(graph, model));
+
+    const validationSummary = new ValidationSummary();
+    // @ts-ignore
+    graph.validationSummary = validationSummary;
+    el.appendChild(validationSummary.createContainer());
+
+    return graph;
 }
 
 function registerBackend(serverUrl: string, token: string, graph: LGraph) {
@@ -107,20 +123,10 @@ async function registerDefinitions(backend: Backend) {
 }
 
 export function render({model, el}: RenderContext<WidgetModel>) {
-    const domCanvas = createCanvas();
-    el.appendChild(createContainer(domCanvas));
-
-    const graph = createGraph(domCanvas);
+    const graph = createUI(model, el);
     graph.addOutput("Workflow Out", "raster,vector,plot", null);
     LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
     LiteGraph.registerNodeType(TYPED_JSON_EDITOR_NODE_TYPE, TypedJsonEditorNode);
-
-    el.appendChild(createExportButton(graph, model));
-
-    const validationSummary = new ValidationSummary();
-    // @ts-ignore
-    graph.validationSummary = validationSummary;
-    el.appendChild(validationSummary.createContainer());
 
     const initialServerUrl = model.get("serverUrl");
     const initalToken = model.get("token");
