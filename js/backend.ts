@@ -20,12 +20,28 @@ export class Backend {
         return await OperatorDefinitions.parseAsync(file);
     }
 
-    async getDatasetType(datasetName: string) {
-        const res = await checkedJsonFetch(this.serverUrl + "/dataset/" + encodeURIComponent(datasetName), {
-            headers: {
-                Authorization: "Bearer " + this.token
-            }
-        });
-        return res.resultDescriptor.type as DatasetType;
+    async ensureDatasetType(datasetName: string, expectedType: DatasetType): Promise<string | null> {
+        let res;
+
+        try {
+            res = await fetch(this.serverUrl + "/dataset/" + encodeURIComponent(datasetName), {
+                headers: {
+                    Authorization: "Bearer " + this.token
+                }
+            });
+        } catch {
+            return "Es konnte keine Verbindung zum Server hergestellt werden, um die Existenz des angefragten Datensatzes zu prüfen.";
+        }
+        const json = await res.json();
+
+        if (!res.ok) {
+            return `Fehler beim Prüfen des Datensatzes "${datasetName}": ${json.message}`;
+        }
+        const foundType = json.resultDescriptor.type as DatasetType;
+
+        if (foundType !== expectedType) {
+            return `Es wird ein Datensatz vom Typ ${expectedType} erwartet, aber "${datasetName}" ist vom Typ ${foundType}.`;
+        }
+        return null;
     }
 }

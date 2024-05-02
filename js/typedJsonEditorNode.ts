@@ -5,6 +5,8 @@ import {Modal} from "bootstrap";
 import {TYPED_JSON_EDITOR_HOLDER_ID, TYPED_JSON_EDITOR_MODAL_ID} from "./constants";
 
 import {isOperatorNode} from "./typeguards";
+import {ValidationSummary} from "./validationSummary";
+import {getValidationSummary} from "./util";
 
 type TypedJsonEditorModalDiv = HTMLElement & {
     instance?: TypedJsonEditorModal;
@@ -18,6 +20,7 @@ class TypedJsonEditorModal {
     private holderDiv: HTMLElement;
     private currentNode?: TypedJsonEditorNode;
     private oldSchema?: object;
+    private validationSummary?: ValidationSummary;
 
     private constructor() {
         let modalDiv: TypedJsonEditorModalDiv = document.createElement("div");
@@ -80,7 +83,7 @@ class TypedJsonEditorModal {
     }
 
     private handleSave() {
-        if (!this.currentNode) {
+        if (!this.currentNode || !this.validationSummary) {
             console.log("ERROR: Editor detached from node on save.");
             return;
         }
@@ -88,7 +91,8 @@ class TypedJsonEditorModal {
             console.log("ERROR: No JSONEditor registered on save.");
             return;
         }
-        const isValid = this.editor.validate().length === 0;
+        const errors: {path: string, property: string, message: string}[] = this.editor.validate();
+        const isValid = errors.length === 0;
 
         if (isValid) {
             console.log("saving", this.editor.getValue());
@@ -96,12 +100,16 @@ class TypedJsonEditorModal {
             this.modalBs.hide();
         } else {
             this.currentNode.setOutputData(0, undefined);
-            alert("Die Daten folgen nicht dem erwarteten Schema.");
+
+            for (const error of errors) {
+                this.validationSummary.addError(TypedJsonEditorNode.title, `Das Feld "${error.path} folgt nicht der ${error.property}-Eigenschaft: ${error.message}"`);
+            }
         }
     }
 
     public show(currentNode: TypedJsonEditorNode, schema: object) {
         this.currentNode = currentNode;
+        this.validationSummary = getValidationSummary(currentNode.graph!);
 
         if (this.editor && this.oldSchema !== schema) {
             console.log("destroy editor with old schema");
