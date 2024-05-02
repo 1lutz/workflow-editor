@@ -20,19 +20,26 @@ export class ValidationSummary {
     }
 
     render() {
-        let entries;
+        if (this.placeholder) {
+            const entries = Object.entries(this.errors);
 
-        if (this.placeholder && (entries = Object.entries(this.errors)).length) {
-            const messageBody = entries
-                .map(function ([operatorName, messages]) {
-                    return `<h5>${operatorName}</h5><p>${messages.join("<br>")}</p>`
-                })
-                .join("");
-            this.placeholder.innerHTML = `<div class="alert alert-danger alert-dismissible" role="alert">
-    <h4>Validierungsfehler beim Exportieren</h4>
+            if (entries.length) {
+                const messageBody = entries
+                    .map(function ([operatorName, messages]) {
+                        return `<h5>${operatorName}</h5><p>${messages.join("<br>")}</p>`
+                    })
+                    .join("");
+                this.placeholder.innerHTML = `<div class="alert alert-danger alert-dismissible" role="alert">
+    <h4>
+        <i class="fas fa-exclamation-triangle"></i>
+        Validierungsfehler beim Exportieren
+    </h4>
     ${messageBody}
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Schließen"></button>
 </div>`;
+            } else {
+                this.placeholder.textContent = "";
+            }
         }
         this.errors = {};
     }
