@@ -1,5 +1,6 @@
 import {LGraphNode} from "litegraph.js";
 import {getValidationSummary} from "./util";
+import type {WorkflowOperator, Workflow} from "./workflowTypes";
 
 export default class WorkflowOutNode extends LGraphNode {
     static title = "Workflow Out";

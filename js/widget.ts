@@ -1,5 +1,6 @@
 import type {RenderContext, AnyModel} from "@anywidget/types";
 import type {OperatorDefinition} from "./operatorDefinitions";
+import type {Workflow} from "./workflowTypes";
 import "litegraph.js/css/litegraph";
 import "./widget.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -25,7 +26,7 @@ import {ValidationSummary} from "./validationSummary";
 interface WidgetModel {
     serverUrl: string;
     token: string;
-    workflow?: object;
+    workflow?: Workflow;
 }
 
 function createCanvas() {
@@ -160,14 +161,16 @@ export function render({model, el}: RenderContext<WidgetModel>) {
     });
 }
 
-export function renderPlainModel({model, el}: { model: WidgetModel, el: HTMLElement }) {
+export function renderPlainModel({model, el, onExport}: { model: WidgetModel, el: HTMLElement, onExport: (workflow: Workflow) => void }) {
     const modelWrapper = {
         get<K extends keyof WidgetModel>(key: K): WidgetModel[K] {
             return model[key];
         },
-        on() {
-            // No implementation needed because the
-            // model passed to this method is constant.
+        on(eventName: string): void {
+            if (eventName === "change:workflow") {
+                // @ts-ignore
+                onExport(this.get("workflow"));
+            }
         }
     } as unknown as AnyModel<WidgetModel>;
     render({model: modelWrapper, el});

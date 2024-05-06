@@ -1,4 +1,15 @@
 {
+	"name": "workflow-editor",
+	"author": "Lutz Kremer",
+	"version": "1.0.0",
+	"main": "src/workflow_editor/static/widget.js",
+	"types": "src/workflow_editor/static/widget.d.ts",
+	"files": [
+		"src/workflow_editor/static/widget.js",
+		"src/workflow_editor/static/widget.css",
+		"src/workflow_editor/static/widget.d.ts",
+		"src/workflow_editor/static/workflowTypes.d.ts"
+	],
 	"scripts": {
 		"dev": "node esbuildscript.mjs --watch",
 		"build": "node esbuildscript.mjs",
