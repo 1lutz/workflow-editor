@@ -11,8 +11,15 @@ import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY, RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
 import {getBackend, getDefinitionName, getValidationSummary, hasSchemaRestrictions} from "./util";
 import type {OperatorDefinition} from "./operatorDefinitions";
+import type {WorkflowOperator} from "./workflowTypes";
 import {OperatorDefinitionParam} from "./operatorDefinitions";
 import {Backend, DatasetType} from "./backend";
+
+export interface OperatorNodeInfo {
+    getInputSchema(slot: number): any | undefined;
+
+    isInputRequired(slot: number): boolean;
+}
 
 function openInNewTab(url: string) {
     window.open(url, "_blank");
@@ -26,7 +33,7 @@ export async function customValidationOk(backend: Backend, instance: any, schema
         if (schema?.format === VECTOR_REF_FORMAT) {
             return await backend.ensureDatasetType(instance, DatasetType.Vector);
         }
-    } catch (err) {
+    } catch (err: any) {
         //return "Error during custom validation of \"" + instance + "\" with", schema, ":", err;
         return `Ein Fehler ist beim Validieren von "${JSON.stringify(instance)}" gegen das Schema ${JSON.stringify(schema, null, 4)} aufgetreten: ${err.message}`;
     }
@@ -91,7 +98,7 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
             this.defaultBoxColor = this.boxcolor;
 
             if (simplifiedInputs) {
-                this.addInputs(simplifiedInputs.map(input => [input.name, input.type]));
+                this.addInputs(simplifiedInputs.map(input => [input.name, input.type, undefined]));
             }
             this.addOutput("out", outputType);
         }
