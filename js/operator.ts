@@ -66,7 +66,7 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
         }
         simplifiedInputs.push({
             name: paramName,
-            type: paramDef.type,
+            type: paramDef.pinType,
             required: object.properties.params.required?.includes(paramName) ?? false,
             schema: paramHasRestrictions ? paramDef : undefined,
             isSource: false,
