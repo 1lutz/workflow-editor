@@ -1,4 +1,4 @@
-import type {DatatypeDefinition} from "./operatorDefinitions";
+import type {DatatypeDefinition} from "./workflowSchema";
 import type {OperatorNodeInfo} from "./operator";
 
 export function isOperatorNode(arg: any): arg is OperatorNodeInfo {
@@ -11,4 +11,8 @@ export function isDatatypeDefinition(arg: any): arg is DatatypeDefinition {
 
 export function isPromise(arg: any): arg is Promise<any> {
     return typeof arg === "object" && typeof arg.then === "function";
+}
+
+export function isObject(arg: any): arg is object {
+    return arg !== null && typeof arg === "object";
 }

@@ -1,6 +1,5 @@
 import type {RenderContext, AnyModel} from "@anywidget/types";
-import type {OperatorDefinition} from "./operatorDefinitions";
-import type {Workflow} from "./workflowTypes";
+import type {OperatorDefinition, Workflow} from "./workflowSchema";
 import "litegraph.js/css/litegraph";
 import "./widget.css";
 import "bootstrap/dist/css/bootstrap.min.css";

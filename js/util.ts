@@ -1,5 +1,4 @@
-import type {JsonSchemaRef, OperatorDefinitionParam} from "./operatorDefinitions";
-import {RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
+import type {JsonSchemaRef, OperatorDefinitionParam} from "./workflowSchema";
 import {LGraph} from "litegraph.js";
 import {Backend} from "./backend";
 import {ValidationSummary} from "./validationSummary";
@@ -52,4 +51,8 @@ export function getBackend(graph: LGraph): Backend {
 export function getValidationSummary(graph: LGraph): ValidationSummary {
     // @ts-ignore
     return graph.validationSummary;
+}
+
+export function joinDistinct(arr: any[], separator?: string) {
+    return [...new Set(arr)].join(separator);
 }

@@ -193,6 +193,10 @@ function fixMissingClamp() {
     };
 }
 
+/**
+ * LiteGraph normally can run only syncrhonous operators.
+ * This adds support for promise based operators.
+ */
 function addRunStepAsync() {
     LGraph.prototype.runStepAsync = async function () {
         const start = LiteGraph.getTime();
@@ -263,6 +267,14 @@ function addRunStepAsync() {
 }
 
 /**
+ * Non V8 based environments like Firefox do not have Error.captureStackTrace
+ * natively, but it is used by the json validator. This method adds polyfills.
+ */
+function fixCaptureStackTrace() {
+    require("error-polyfill");
+}
+
+/**
  * Automatically applies fixes to external components like LiteGraph.
  */
 export default function applyAllBugfixes() {
@@ -270,4 +282,5 @@ export default function applyAllBugfixes() {
     fixCreateDefaultNodeForSlotFailsInStrictMode();
     fixMissingClamp();
     addRunStepAsync();
+    fixCaptureStackTrace();
 }

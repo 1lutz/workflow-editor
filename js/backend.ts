@@ -1,5 +1,5 @@
 import {checkedJsonFetch} from "./util";
-import {OperatorDefinitions} from "./operatorDefinitions";
+import {WorkflowSchema} from "./workflowSchema";
 
 export enum DatasetType {
     Raster = "raster",
@@ -17,7 +17,7 @@ export class Backend {
 
     async fetchOperatorDefinitions() {
         const file = await checkedJsonFetch(this.serverUrl + "/workflow/schema");
-        return await OperatorDefinitions.parseAsync(file);
+        return await WorkflowSchema.parseAsync(file);
     }
 
     async ensureDatasetType(datasetName: string, expectedType: DatasetType): Promise<string | null> {
