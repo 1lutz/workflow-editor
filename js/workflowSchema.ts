@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {cachedCheckedJsonFetch, getDefinitionName, joinDistinct} from "./util";
+import {cachedCheckedJsonFetch, joinDistinct} from "./util";
 import {JSON_SCHEMA_URL} from "./constants";
 import {validate} from "jsonschema";
 import {isObject} from "./typeguards";
