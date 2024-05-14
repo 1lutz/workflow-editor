@@ -10,9 +10,8 @@ import {
 import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY, RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
 import {getBackend, getDefinitionName, getValidationSummary, hasSchemaRestrictions} from "./util";
-import type {OperatorDefinition} from "./operatorDefinitions";
-import type {WorkflowOperator} from "./workflowTypes";
-import {OperatorDefinitionParam} from "./operatorDefinitions";
+import type {OperatorDefinition, WorkflowOperator} from "./workflowSchema";
+import {OperatorDefinitionParam} from "./workflowSchema";
 import {Backend, DatasetType} from "./backend";
 
 export interface OperatorNodeInfo {

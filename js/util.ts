@@ -2,6 +2,7 @@ import type {JsonSchemaRef, OperatorDefinitionParam} from "./workflowSchema";
 import {LGraph} from "litegraph.js";
 import {Backend} from "./backend";
 import {ValidationSummary} from "./validationSummary";
+import {RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
 
 export function getDefinitionName(ref: JsonSchemaRef) {
     return ref.$ref.substring(14);
