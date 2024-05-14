@@ -53,8 +53,20 @@ const OperatorDefinitionParams = z.object({
     required: z.array(z.string())
 }).partial();
 
+const OperatorDefinitionSource = z.union([
+    JsonSchemaRef,
+    z.object({ items: JsonSchemaRef })
+]).transform(source => "$ref" in source ? {
+    pinType: getDefinitionName(source)
+} : {
+    pinType: "array",
+    innerType: getDefinitionName(source.items)
+});
+
+export type OperatorDefinitionSource = z.infer<typeof OperatorDefinitionSource>;
+
 const OperatorDefinitionSources = z.object({
-    properties: z.record(z.string(), JsonSchemaRef),
+    properties: z.record(z.string(), OperatorDefinitionSource),
     required: z.array(z.string()).optional()
 });
 
