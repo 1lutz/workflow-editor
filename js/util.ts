@@ -11,9 +11,9 @@ export function getDefinitionName(ref: JsonSchemaRef) {
 const metaOnlySchemaProps = ["id", "$schema", "title", "description", "type", "pinType", "help_text"];
 
 export function hasSchemaRestrictions(schema: OperatorDefinitionParam) {
-    if (schema.format === RASTER_REF_FORMAT || schema.format === VECTOR_REF_FORMAT) {
+    /*if (schema.format === RASTER_REF_FORMAT || schema.format === VECTOR_REF_FORMAT) {
         return true;
-    }
+    }*/
     for (const schemaKey in schema) {
         if (!metaOnlySchemaProps.includes(schemaKey)) {
             return true;

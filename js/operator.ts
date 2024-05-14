@@ -9,8 +9,8 @@ import {
 } from "litegraph.js";
 import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY, RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
-import {getBackend, getDefinitionName, getValidationSummary, hasSchemaRestrictions} from "./util";
-import type {OperatorDefinition, OperatorDefinitionParams, WorkflowOperator} from "./workflowSchema";
+import {getBackend, getValidationSummary, hasSchemaRestrictions} from "./util";
+import type {OperatorDefinition, OperatorDefinitionSource, WorkflowOperator} from "./workflowSchema";
 import {OperatorDefinitionParam} from "./workflowSchema";
 import {Backend, DatasetType} from "./backend";
 
@@ -26,13 +26,18 @@ function openInNewTab(url: string) {
     window.open(url, "_blank");
 }
 
-export async function customValidationOk(backend: Backend, instance: any, schema?: OperatorDefinitionParam): Promise<string | null> {
+export async function customValidationOk(backend: Backend, instance: unknown, schema: OperatorDefinitionParam | OperatorDefinitionSource): Promise<string | null> {
     try {
-        if (schema?.format === RASTER_REF_FORMAT) {
-            return await backend.ensureDatasetType(instance, DatasetType.Raster);
+        if ("format" in schema && typeof instance === "string") {
+            if (schema.format === RASTER_REF_FORMAT) {
+                return await backend.ensureDatasetType(instance, DatasetType.Raster);
+            }
+            if (schema.format === VECTOR_REF_FORMAT) {
+                return await backend.ensureDatasetType(instance, DatasetType.Vector);
+            }
         }
-        if (schema?.format === VECTOR_REF_FORMAT) {
-            return await backend.ensureDatasetType(instance, DatasetType.Vector);
+        if ("innerType" in schema && typeof schema.innerType === "string") {
+            console.log("Validate source array", instance, "against schema", schema);
         }
     } catch (err: any) {
         //return "Error during custom validation of \"" + instance + "\" with", schema, ":", err;
@@ -45,7 +50,7 @@ type SimplifiedInputInfo = {
     name: string,
     type: string,
     required: boolean,
-    schema?: OperatorDefinitionParam,
+    schema?: OperatorDefinitionParam | OperatorDefinitionSource,
     isSource: boolean,
     help_text?: string
 }
@@ -63,16 +68,19 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
         }
     }
     for (const [sourceName, sourceDef] of Object.entries(object.properties.sources?.properties || {})) {
-        const sourceType = getDefinitionName(sourceDef);
+        const isSourceArray = "innerType" in sourceDef;
 
-        // @ts-ignore
-        let defaultOut: string[] = LiteGraph.slot_types_default_out[sourceType];
-        if (!defaultOut.includes(nodeId)) defaultOut.push(nodeId);
+        if (!isSourceArray) {
+            // @ts-ignore
+            let defaultOut: string[] = LiteGraph.slot_types_default_out[sourceDef.pinType];
+            if (!defaultOut.includes(nodeId)) defaultOut.push(nodeId);
+        }
 
         simplifiedInputs.push({
             name: sourceName,
-            type: sourceType,
+            type: sourceDef.pinType,
             required: object.properties.sources?.required?.includes(sourceName) ?? false,
+            schema: isSourceArray ? sourceDef : undefined,
             isSource: true
         });
     }
@@ -130,7 +138,7 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
                                 }
                                 return false;
                             }
-                            const customErrorMessage = await customValidationOk(backend, instance, inputInfo.schema);
+                            const customErrorMessage = await customValidationOk(backend, instance, inputInfo.schema!);
 
                             if (typeof customErrorMessage === "string") {
                                 validationSummary.addError(NewNode.title, customErrorMessage);
