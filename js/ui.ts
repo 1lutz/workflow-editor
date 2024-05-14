@@ -45,8 +45,11 @@ function createGraph(domCanvas: HTMLCanvasElement) {
 function createExportButton(graph: LGraph, model: AnyModel<WidgetModel>) {
     let domButton = document.createElement("button");
     domButton.classList.add("workflow_editor-export", "btn", "btn-outline-primary", "btn-sm");
-    domButton.innerHTML = "Export";
+    domButton.innerText = "Export";
     domButton.addEventListener("click", async () => {
+        domButton.setAttribute("disabled", "disabled");
+        domButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="visually-hidden">Exporting...</span>';
+
         graph.setOutputData(WorkflowOutNode.title, null);
         await graph.runStepAsync();
         graph.setDirtyCanvas(true, false);
@@ -63,6 +66,9 @@ function createExportButton(graph: LGraph, model: AnyModel<WidgetModel>) {
             validationSummary.addError("Allgemein", `Damit das Ergebnis eindeutig ist, darf es nur einen Ausgabeblock geben. Lösche überschüssige ${WorkflowOutNode.title}-Block.`);
         }
         validationSummary.render();
+
+        domButton.innerText = "Export";
+        domButton.removeAttribute("disabled");
     });
     return domButton;
 }
