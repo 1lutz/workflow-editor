@@ -65,10 +65,14 @@ export const LGraphCanvas_CONFIG_OVERRIDES = {
         number: "#7F7",
         string: "#77F",
         boolean: "#F77",
+        raster: "#FF7",
+        vector: "#F7F"
     },
     default_connection_color_byTypeOff: {
         number: "#474",
         string: "#447",
         boolean: "#744",
+        raster: "#774",
+        vector: "#747"
     }
 };

@@ -146,7 +146,7 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
                 for (let i = 0; i < simplifiedInputs.length; i++) {
                     if (!await validateInput(i)) {
                         isValid = false;
-                        break;
+                        // do not break to show all validation errors
                     }
                 }
                 if (isValid) {
