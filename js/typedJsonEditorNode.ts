@@ -1,4 +1,4 @@
-import {INodeInputSlot, LGraphNode} from "litegraph.js";
+/*import {INodeInputSlot, LGraphNode} from "litegraph.js";
 // @ts-ignore
 import {JSONEditor} from "@json-editor/json-editor/dist/jsoneditor.js"
 import {Modal} from "bootstrap";
@@ -189,4 +189,4 @@ export default class TypedJsonEditorNode extends LGraphNode {
         }
         TypedJsonEditorModal.Instance.show(this, this.schema);
     }
-}
+}*/

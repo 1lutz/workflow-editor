@@ -2,13 +2,7 @@ export const OPERATOR_CATEGORY = "geoengine";
 
 export const WORKFLOW_OUT_NODE_TYPE = OPERATOR_CATEGORY + "/workflowout";
 
-export const TYPED_JSON_EDITOR_NODE_TYPE = OPERATOR_CATEGORY + "/typedjsoneditor";
-
-export const PREDEFINED_NODE_TYPES = [WORKFLOW_OUT_NODE_TYPE, TYPED_JSON_EDITOR_NODE_TYPE];
-
-export const TYPED_JSON_EDITOR_MODAL_ID = "workflow_editor-typed_editor_modal";
-
-export const TYPED_JSON_EDITOR_HOLDER_ID = "workflow_editor-typed_editor_holder";
+export const PREDEFINED_NODE_TYPES = [WORKFLOW_OUT_NODE_TYPE];
 
 export const JSON_SCHEMA_URL = "https://json-schema.org/draft-07/schema";
 
@@ -20,10 +14,10 @@ export const LiteGraph_CONFIG_OVERRIDES = {
     release_link_on_empty_shows_menu: true,
     slot_types_default_in: {
         _event_: "widget/button",
-        array: ["basic/array", TYPED_JSON_EDITOR_NODE_TYPE, "basic/set_array"],
+        array: ["basic/array", "basic/set_array"],
         boolean: "basic/boolean",
         number: "widget/number",
-        object: ["basic/data", TYPED_JSON_EDITOR_NODE_TYPE],
+        object: ["basic/data"],
         string: ["basic/string", "string/concatenate"],
         vec2: "math3d/xy-to-vec2",
         vec3: "math3d/xyz-to-vec3",
