@@ -53,6 +53,8 @@ const OperatorDefinitionParams = z.object({
     required: z.array(z.string())
 }).partial();
 
+export type OperatorDefinitionParams = z.infer<typeof OperatorDefinitionParams>;
+
 const OperatorDefinitionSources = z.object({
     properties: z.record(z.string(), JsonSchemaRef),
     required: z.array(z.string()).optional()
