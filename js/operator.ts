@@ -10,7 +10,7 @@ import {
 import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY, RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
 import {getBackend, getDefinitionName, getValidationSummary, hasSchemaRestrictions} from "./util";
-import type {OperatorDefinition, WorkflowOperator} from "./workflowSchema";
+import type {OperatorDefinition, OperatorDefinitionParams, WorkflowOperator} from "./workflowSchema";
 import {OperatorDefinitionParam} from "./workflowSchema";
 import {Backend, DatasetType} from "./backend";
 
@@ -18,6 +18,8 @@ export interface OperatorNodeInfo {
     getInputSchema(slot: number): any | undefined;
 
     isInputRequired(slot: number): boolean;
+
+    params?: OperatorDefinitionParams;
 }
 
 function openInNewTab(url: string) {
@@ -59,14 +61,6 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
         if (paramHasRestrictions) {
             needsToValidateInputs = true;
         }
-        simplifiedInputs.push({
-            name: paramName,
-            type: paramDef.pinType,
-            required: object.properties.params.required?.includes(paramName) ?? false,
-            schema: paramHasRestrictions ? paramDef : undefined,
-            isSource: false,
-            help_text: paramDef.help_text
-        });
     }
     for (const [sourceName, sourceDef] of Object.entries(object.properties.sources?.properties || {})) {
         const sourceType = getDefinitionName(sourceDef);
@@ -91,6 +85,7 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
         static title = object.title || object.properties.type.enum[0];
         static desc = object.description || "Workflow Operator";
         defaultBoxColor: string;
+        params?: OperatorDefinitionParams;
 
         constructor() {
             super(NewNode.title);
@@ -107,6 +102,10 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
             const backend = getBackend(that.graph!);
             const validationSummary = getValidationSummary(this.graph!);
 
+            if (!that.params) {
+                validationSummary.addError(NewNode.title, `Die Konfigurationsparameter wurden nicht richtig angegeben.`);
+                return;
+            }
             if (needsToValidateInputs) {
                 let isValid = true;
 
@@ -158,7 +157,7 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
             }
             let res: WorkflowOperator = {
                 type: object.properties.type.enum[0],
-                params: {}
+                params: that.params
             };
             if (simplifiedInputs.length) {
                 function importInputData(inIndex: number) {
