@@ -9,10 +9,8 @@ import WorkflowOutNode from "./workflowOutNode";
 import {
     OPERATOR_CATEGORY,
     PREDEFINED_NODE_TYPES,
-    TYPED_JSON_EDITOR_NODE_TYPE,
     WORKFLOW_OUT_NODE_TYPE
 } from "./constants";
-import TypedJsonEditorNode from "./typedJsonEditorNode";
 import {isDatatypeDefinition} from "./typeguards";
 import {getDefinitionName} from "./util";
 import {Backend} from "./backend";
@@ -49,7 +47,6 @@ export function render({model, el}: RenderContext<WidgetModel>) {
     const graph = createUI(model, el);
     graph.addOutput("Workflow Out", "raster,vector,plot", null);
     LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
-    LiteGraph.registerNodeType(TYPED_JSON_EDITOR_NODE_TYPE, TypedJsonEditorNode);
 
     const initialServerUrl = model.get("serverUrl");
     const initalToken = model.get("token");
