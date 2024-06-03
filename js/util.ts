@@ -1,25 +1,10 @@
-import type {JsonSchemaRef, OperatorDefinitionParam} from "./workflowSchema";
+import type {JsonSchemaRef} from "./workflowSchema";
 import {LGraph} from "litegraph.js";
 import {Backend} from "./backend";
 import {ValidationSummary} from "./validationSummary";
-import {RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
 
 export function getDefinitionName(ref: JsonSchemaRef) {
     return ref.$ref.substring(14);
-}
-
-const metaOnlySchemaProps = ["id", "$schema", "title", "description", "type", "pinType", "help_text"];
-
-export function hasSchemaRestrictions(schema: OperatorDefinitionParam) {
-    /*if (schema.format === RASTER_REF_FORMAT || schema.format === VECTOR_REF_FORMAT) {
-        return true;
-    }*/
-    for (const schemaKey in schema) {
-        if (!metaOnlySchemaProps.includes(schemaKey)) {
-            return true;
-        }
-    }
-    return false;
 }
 
 export function checkedJsonFetch(url: string, init?: RequestInit) {
@@ -56,4 +41,15 @@ export function getValidationSummary(graph: LGraph): ValidationSummary {
 
 export function joinDistinct(arr: any[], separator?: string) {
     return [...new Set(arr)].join(separator);
+}
+
+export function isEmpty(arg: undefined | object | any[]): boolean {
+    if (arg === undefined) {
+        return true;
+    }
+    else if (Array.isArray(arg)) {
+        return arg.length === 0;
+    } else {
+        return Object.keys(arg).length === 0;
+    }
 }
