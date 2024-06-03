@@ -15,6 +15,7 @@ import {isDatatypeDefinition} from "./typeguards";
 import {getDefinitionName} from "./util";
 import {Backend} from "./backend";
 import {createUI, type WidgetModel} from "./ui";
+import OperatorDefinitionWrapper from "./operatorDefinitionWrapper";
 
 function registerBackend(serverUrl: string, token: string, graph: LGraph) {
     const backend = new Backend(serverUrl, token);
@@ -39,7 +40,7 @@ async function registerDefinitions(backend: Backend) {
         }
     }
     for (const [key, operator] of Object.entries(operators)) {
-        registerWorkflowOperator(operator, outputTypes[key]);
+        registerWorkflowOperator(new OperatorDefinitionWrapper(operator, outputTypes[key]));
     }
 }
 

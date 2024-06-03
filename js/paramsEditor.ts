@@ -15,6 +15,8 @@ export default class ParamsEditor {
     private offcanvasBs: Offcanvas;
     private editor?: JSONEditor;
     private holderDiv: HTMLElement;
+    private titleContainer: HTMLElement;
+    private helpLink: HTMLElement;
     private currentNode?: OperatorNodeInfo;
     private oldSchema?: OperatorDefinitionParams;
 
@@ -41,12 +43,28 @@ export default class ParamsEditor {
         Save changes
     </button>
 </div>`;
+        document.body.appendChild(offcanvasDiv);
+
         const saveButton = offcanvasDiv.querySelector(`.editor-save`)!;
         saveButton.addEventListener("click", function() {
             ParamsEditor.Instance.handleSave();
         });
         this.offcanvasBs = Offcanvas.getOrCreateInstance(offcanvasDiv);
         this.holderDiv = offcanvasDiv.querySelector(".editor-holder")!;
+        this.titleContainer = offcanvasDiv.querySelector(".offcanvas-title")!;
+        this.helpLink = offcanvasDiv.querySelector('a[target="_blank"]')!;
+
+        this.holderDiv.addEventListener("keypress", function(event) {
+            if (event.keyCode === 13 || event.which === 13) {
+                // enter pressed in modal
+                if (document.activeElement?.nodeName === "INPUT" && document.activeElement.getAttribute("type") === "text") {
+                    // manually trigger change event on text inputs to update in model
+                    document.activeElement.dispatchEvent(new Event("change"));
+                    console.log("updated input on enter");
+                }
+                ParamsEditor.Instance.handleSave();
+            }
+        });
     }
 
     public static get Instance() {
@@ -85,7 +103,11 @@ export default class ParamsEditor {
     }
 
     show(currentNode: OperatorNodeInfo, schema: OperatorDefinitionParams) {
+        console.log("Schema:", schema);
         this.currentNode = currentNode;
+
+        this.titleContainer.innerText = currentNode.title;
+        this.helpLink.setAttribute("href", currentNode.help_text);
 
         if (this.editor && this.oldSchema !== schema) {
             console.log("destroy editor with old schema");
@@ -97,6 +119,8 @@ export default class ParamsEditor {
                 theme: "bootstrap5",
                 iconlib: "fontawesome5",
                 disable_array_delete_last_row: true,
+                disable_edit_json: true,
+                use_default_values: false,
                 schema
             });
             this.oldSchema = schema;

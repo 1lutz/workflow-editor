@@ -7,19 +7,18 @@ import {
     LiteGraph,
     Vector2
 } from "litegraph.js";
-import {validate} from "jsonschema";
 import {OPERATOR_CATEGORY, RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
-import {getBackend, getValidationSummary, hasSchemaRestrictions} from "./util";
-import type {OperatorDefinition, OperatorDefinitionSource, WorkflowOperator} from "./workflowSchema";
+import {getBackend, getValidationSummary, isEmpty} from "./util";
+import type {OperatorDefinitionSource, WorkflowOperator, OperatorDefinitionParams} from "./workflowSchema";
 import {OperatorDefinitionParam} from "./workflowSchema";
 import {Backend, DatasetType} from "./backend";
+import {isSourceArray} from "./typeguards";
+import OperatorDefinitionWrapper from "./operatorDefinitionWrapper";
 
 export interface OperatorNodeInfo {
-    getInputSchema(slot: number): any | undefined;
-
-    isInputRequired(slot: number): boolean;
-
+    title: string;
     params?: OperatorDefinitionParams;
+    help_text: string;
 }
 
 function openInNewTab(url: string) {
@@ -46,144 +45,101 @@ export async function customValidationOk(backend: Backend, instance: unknown, sc
     return null;
 }
 
-type SimplifiedInputInfo = {
-    name: string,
-    type: string,
-    required: boolean,
-    schema?: OperatorDefinitionParam | OperatorDefinitionSource,
-    isSource: boolean,
-    help_text?: string
-}
+export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
+    const nodeId = OPERATOR_CATEGORY + "/" + op.id;
 
-export function registerWorkflowOperator(object: OperatorDefinition, outputType: string) {
-    const nodeId = OPERATOR_CATEGORY + "/" + object.properties.type.enum[0];
-    let needsToValidateInputs = Boolean(object.properties.params.required?.length) || Boolean(object.properties.sources?.required?.length);
-    let simplifiedInputs: SimplifiedInputInfo[] = [];
-
-    for (const [paramName, paramDef] of Object.entries(object.properties.params.properties || {})) {
-        const paramHasRestrictions = hasSchemaRestrictions(paramDef);
-
-        if (paramHasRestrictions) {
-            needsToValidateInputs = true;
-        }
-    }
-    for (const [sourceName, sourceDef] of Object.entries(object.properties.sources?.properties || {})) {
-        const isSourceArray = "innerType" in sourceDef;
-
-        if (!isSourceArray) {
+    Object.values(op.sources || {})
+        .filter(sourceDef => !isSourceArray(sourceDef))
+        .forEach(sourceDef => {
             // @ts-ignore
             let defaultOut: string[] = LiteGraph.slot_types_default_out[sourceDef.pinType];
             if (!defaultOut.includes(nodeId)) defaultOut.push(nodeId);
-        }
-
-        simplifiedInputs.push({
-            name: sourceName,
-            type: sourceDef.pinType,
-            required: object.properties.sources?.required?.includes(sourceName) ?? false,
-            schema: isSourceArray ? sourceDef : undefined,
-            isSource: true
         });
-    }
 
     // @ts-ignore
-    let defaultIn: string[] = LiteGraph.slot_types_default_in[outputType];
+    let defaultIn: string[] = LiteGraph.slot_types_default_in[op.outputType];
     defaultIn.push(nodeId);
 
     class NewNode extends LGraphNode implements OperatorNodeInfo {
-        static title = object.title || object.properties.type.enum[0];
-        static desc = object.description || "Workflow Operator";
-        defaultBoxColor: string;
+        static title = op.title;
+        static desc = op.description;
         params?: OperatorDefinitionParams;
 
         constructor() {
             super(NewNode.title);
-            this.defaultBoxColor = this.boxcolor;
 
-            if (simplifiedInputs) {
-                this.addInputs(simplifiedInputs.map(input => [input.name, input.type, undefined]));
+            if (!isEmpty(op.sources)) {
+                this.addInputs(Object.entries(op.sources!).map(([sourceName, sourceDef]) => [sourceName, sourceDef.pinType, undefined]));
             }
-            this.addOutput("out", outputType);
+            this.addOutput("out", op.outputType);
+
+            if (!isEmpty(op.params)) {
+                this.addWidget("button", "params", "", this.edit.bind(this));
+            }
+        }
+
+        edit() {
+            op.showParamsEditor(this);
         }
 
         async onExecute() {
-            const that = this;
-            const backend = getBackend(that.graph!);
+            const backend = getBackend(this.graph!);
             const validationSummary = getValidationSummary(this.graph!);
 
-            if (!that.params) {
+            if (!this.params) {
                 validationSummary.addError(NewNode.title, `Die Konfigurationsparameter wurden nicht richtig angegeben.`);
                 return;
             }
-            if (needsToValidateInputs) {
-                let isValid = true;
+            let isValid = true;
 
-                async function validateInput(inIndex: number) {
-                    const inputInfo = simplifiedInputs[inIndex];
-                    const checkSet = inputInfo.required;
-                    const checkSchema = Boolean(inputInfo.schema);
+            for (const [paramName, paramVal] of Object.entries(this.params)) {
+                const customErrorMessage = await customValidationOk(backend, paramVal, op.params![paramName]);
 
-                    if (checkSet || checkSchema) {
-                        const instance = that.getInputData(inIndex);
-
-                        if (checkSet && instance === undefined) {
-                            validationSummary.addError(NewNode.title, `Der Parameter "${inputInfo.name}" erwartet Daten, es wurden aber keine eingegeben.`);
-                            return false;
-                        }
-                        if (checkSchema) {
-                            const schemaValidationRes = validate(instance, inputInfo.schema);
-
-                            if (!schemaValidationRes.valid) {
-                                for (const error of schemaValidationRes.errors) {
-                                    validationSummary.addError(NewNode.title, JSON.stringify(error)); // TODO
-                                }
-                                return false;
-                            }
-                            const customErrorMessage = await customValidationOk(backend, instance, inputInfo.schema!);
-
-                            if (typeof customErrorMessage === "string") {
-                                validationSummary.addError(NewNode.title, customErrorMessage);
-                                return false;
-                            }
-                        }
-                    }
-                    return true;
-                }
-
-                for (let i = 0; i < simplifiedInputs.length; i++) {
-                    if (!await validateInput(i)) {
-                        isValid = false;
-                        // do not break to show all validation errors
-                    }
-                }
-                if (isValid) {
-                    this.boxcolor = this.defaultBoxColor;
-                } else {
-                    this.boxcolor = "red";
-                    this.setOutputData(0, undefined);
-                    return;
+                if (typeof customErrorMessage === "string") {
+                    validationSummary.addError(NewNode.title, customErrorMessage);
+                    isValid = false;
                 }
             }
-            let res: WorkflowOperator = {
-                type: object.properties.type.enum[0],
-                params: that.params
-            };
-            if (simplifiedInputs.length) {
-                function importInputData(inIndex: number) {
-                    const inData = that.getInputData(inIndex);
-                    if (inData === undefined) return;
+            for (const [sourceName, sourceDef] of Object.entries(op.sources || {})) {
+                const checkSet = op.isSourceRequired(sourceName);
+                const checkSchema = isSourceArray(sourceDef);
 
-                    const inInfo = simplifiedInputs[inIndex];
+                if (checkSet || checkSchema) {
+                    const instance = this.getInputDataByName(sourceName);
 
-                    if (inInfo.isSource) {
-                        if (!res.sources) res.sources = {};
-                        res.sources[inInfo.name] = inData;
-                    } else {
-                        res.params[inInfo.name] = inData;
+                    if (checkSet && instance === undefined) {
+                        validationSummary.addError(NewNode.title, `Der Parameter "${sourceName}" erwartet Daten, es wurden aber keine eingegeben.`);
+                        return false;
+                    }
+                    if (checkSchema) {
+                        const customErrorMessage = await customValidationOk(backend, instance, sourceDef);
+
+                        if (typeof customErrorMessage === "string") {
+                            validationSummary.addError(NewNode.title, customErrorMessage);
+                            return false;
+                        }
                     }
                 }
+            }
+            if (isValid) {
+                this.has_errors = false;
+            } else {
+                this.has_errors = true;
+                this.setOutputData(0, undefined);
+                return;
+            }
+            let res: WorkflowOperator = {
+                type: op.id,
+                params: this.params
+            };
+            if (!isEmpty(op.sources)) {
+                res.sources = {};
 
-                for (let i = 0; i < simplifiedInputs.length; i++) {
-                    importInputData(i);
+                for (const sourceName of Object.keys(op.sources!)) {
+                    const sourceData = this.getInputDataByName(sourceName);
+                    if (sourceData === undefined) return;
+
+                    res.sources[sourceName] = sourceData;
                 }
             }
             this.setOutputData(0, res);
@@ -192,11 +148,11 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
         getExtraMenuOptions(): ContextMenuItem[] {
             let extras: ContextMenuItem[] = [];
 
-            if (object.help_text) {
+            if (op.help_text) {
                 extras.push({
                     content: "Operator Help",
                     callback: function () {
-                        openInNewTab(object.help_text!);
+                        openInNewTab(op.help_text!);
                     }
                 });
             }
@@ -210,17 +166,9 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
                 slot: number;
                 link_pos: Vector2;
             };
-            const help_text = slot2.input && simplifiedInputs[slot2.slot].help_text;
             const isConnectedOutput = Boolean(slot2.output?.links?.length);
 
-            if (help_text) {
-                return [{
-                    content: "Input Help",
-                    callback: function () {
-                        openInNewTab(help_text);
-                    }
-                }];
-            } else if (isConnectedOutput) {
+            if (isConnectedOutput) {
                 return [{
                     content: "Disconnect Links",
                     // @ts-ignore
@@ -231,12 +179,8 @@ export function registerWorkflowOperator(object: OperatorDefinition, outputType:
             }
         }
 
-        getInputSchema(slot: number): object | undefined {
-            return simplifiedInputs[slot]?.schema;
-        }
-
-        isInputRequired(slot: number): boolean {
-            return Boolean(simplifiedInputs[slot].required);
+        get help_text(): string {
+            return op.help_text ?? "https://docs.geoengine.io";
         }
     }
 

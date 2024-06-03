@@ -1,8 +1,7 @@
 import {z} from "zod";
-import {cachedCheckedJsonFetch, joinDistinct} from "./util";
+import {cachedCheckedJsonFetch, getDefinitionName} from "./util";
 import {JSON_SCHEMA_URL} from "./constants";
 import {validate} from "jsonschema";
-import {isObject} from "./typeguards";
 
 const JsonSchemaRef = z.object({
     $ref: z.string()
@@ -10,41 +9,9 @@ const JsonSchemaRef = z.object({
 
 export type JsonSchemaRef = z.infer<typeof JsonSchemaRef>;
 
-const OperatorDefinitionParam = z
-    .preprocess(
-        (param: unknown) => {
-            if (!isObject(param)) return param;
-
-            if ("type" in param) {
-                if (typeof param.type === "string") {
-                    (param as any).pinType = param.type;
-                } else if (Array.isArray(param.type)) {
-                    const realType = param.type.find((elem: unknown) => typeof elem === "string" && elem !== "null");
-
-                    if (realType) {
-                        (param as any).pinType = realType;
-                    }
-                }
-            } else if ("oneOf" in param) {
-                if (Array.isArray(param.oneOf) && param.oneOf.every((variant: unknown) => isObject(variant) && "type" in variant && typeof variant.type === "string")) {
-                    (param as any).pinType = joinDistinct(param.oneOf.map(variant => variant.type), ",");
-                }
-            } else if ("anyOf" in param) {
-                if (Array.isArray(param.anyOf)) {
-                    const innerOneOf = param.anyOf.find((variant: unknown) => isObject(variant) && "oneOf" in variant && Array.isArray(variant.oneOf))?.oneOf;
-
-                    if (innerOneOf && innerOneOf.every((variant: unknown) => isObject(variant) && "type" in variant && typeof variant.type === "string")) {
-                        (param as any).pinType = joinDistinct(innerOneOf.map((variant: any) => variant.type), ",");
-                    }
-                }
-            }
-            return param;
-        },
-        z.object({
-            pinType: z.string(),
-            help_text: z.string().optional(),
-            format: z.string().optional()
-        }).passthrough());
+const OperatorDefinitionParam = z.object({
+    format: z.string().optional()
+}).passthrough();
 
 export type OperatorDefinitionParam = z.infer<typeof OperatorDefinitionParam>;
 

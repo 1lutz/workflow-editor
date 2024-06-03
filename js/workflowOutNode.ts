@@ -7,11 +7,8 @@ export default class WorkflowOutNode extends LGraphNode {
     static title = "Workflow Out";
     static desc = "Data flowing into this block is exported as a workflow."
 
-    defaultBoxColor: string;
-
     constructor() {
         super(WorkflowOutNode.title);
-        this.defaultBoxColor = this.boxcolor;
         this.addInput("return", "raster,vector,plot");
     }
 
@@ -23,9 +20,9 @@ export default class WorkflowOutNode extends LGraphNode {
             type = type[0].toUpperCase() + type.substring(1);
             const workflow: Workflow = {type, operator};
             this.graph?.setOutputData(WorkflowOutNode.title, workflow);
-            this.boxcolor = this.defaultBoxColor;
+            this.has_errors = false;
         } else {
-            this.boxcolor = "red";
+            this.has_errors = true;
 
             if (this.graph) {
                 this.graph.setOutputData("Workflow Out", null);
