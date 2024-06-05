@@ -19,8 +19,8 @@ export default class OperatorDefinitionWrapper {
         return this.data.title ?? this.id;
     }
 
-    get help_text(): string | undefined {
-        return this.data.help_text;
+    get help_url(): string {
+        return this.data.links?.find(link => link.rel === "external help")?.href ?? "https://docs.geoengine.io";
     }
 
     get description(): string {

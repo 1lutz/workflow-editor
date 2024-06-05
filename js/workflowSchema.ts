@@ -9,6 +9,11 @@ const JsonSchemaRef = z.object({
 
 export type JsonSchemaRef = z.infer<typeof JsonSchemaRef>;
 
+const JsonSchemaLinks = z.array(z.object({
+    rel: z.string(),
+    href: z.string()
+})).optional();
+
 const OperatorDefinitionParam = z.object({
     format: z.string().optional()
 }).passthrough();
@@ -42,7 +47,7 @@ const OperatorDefinitionSources = z.object({
 const OperatorDefinition = z.object({
     title: z.string().optional(),
     description: z.string().optional(),
-    help_text: z.string().optional(),
+    links: JsonSchemaLinks,
     properties: z.object({
         type: z.object({
             //the single element is operator id
