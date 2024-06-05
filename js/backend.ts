@@ -1,5 +1,6 @@
 import {checkedJsonFetch} from "./util";
 import {WorkflowSchema} from "./workflowSchema";
+import {GetDatasetSchema} from "./backendSchema";
 
 export enum DatasetType {
     Raster = "raster",
@@ -32,12 +33,16 @@ export class Backend {
         } catch {
             return "Es konnte keine Verbindung zum Server hergestellt werden, um die Existenz des angefragten Datensatzes zu prüfen.";
         }
-        const json = await res.json();
+        const json = GetDatasetSchema.safeParse(await res.json());
 
-        if (!res.ok) {
-            return `Fehler beim Prüfen des Datensatzes "${datasetName}": ${json.message}`;
+        if (!json.success) {
+            return "Die Serverantwort ist in einem unerwarteten Format.";
         }
-        const foundType = json.resultDescriptor.type as DatasetType;
+
+        if ("error" in json.data) {
+            return `Fehler beim Prüfen des Datensatzes "${datasetName}": ${json.data.message}`;
+        }
+        const foundType = json.data.resultDescriptor.type as DatasetType;
 
         if (foundType !== expectedType) {
             return `Es wird ein Datensatz vom Typ ${expectedType} erwartet, aber "${datasetName}" ist vom Typ ${foundType}.`;
