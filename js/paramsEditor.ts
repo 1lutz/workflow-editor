@@ -107,7 +107,7 @@ export default class ParamsEditor {
         this.currentNode = currentNode;
 
         this.titleContainer.innerText = currentNode.title;
-        this.helpLink.setAttribute("href", currentNode.help_text);
+        this.helpLink.setAttribute("href", currentNode.help_url);
 
         if (this.editor && this.oldSchema !== schema) {
             console.log("destroy editor with old schema");

@@ -18,7 +18,7 @@ import OperatorDefinitionWrapper from "./operatorDefinitionWrapper";
 export interface OperatorNodeInfo {
     title: string;
     params?: OperatorDefinitionParams;
-    help_text: string;
+    help_url: string;
 }
 
 function openInNewTab(url: string) {
@@ -87,6 +87,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             const validationSummary = getValidationSummary(this.graph!);
 
             if (!this.params) {
+                this.has_errors = true;
                 validationSummary.addError(NewNode.title, `Die Konfigurationsparameter wurden nicht richtig angegeben.`);
                 return;
             }
@@ -148,11 +149,11 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
         getExtraMenuOptions(): ContextMenuItem[] {
             let extras: ContextMenuItem[] = [];
 
-            if (op.help_text) {
+            if (op.help_url) {
                 extras.push({
                     content: "Operator Help",
                     callback: function () {
-                        openInNewTab(op.help_text!);
+                        openInNewTab(op.help_url!);
                     }
                 });
             }
@@ -179,8 +180,8 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             }
         }
 
-        get help_text(): string {
-            return op.help_text ?? "https://docs.geoengine.io";
+        get help_url(): string {
+            return op.help_url;
         }
     }
 
