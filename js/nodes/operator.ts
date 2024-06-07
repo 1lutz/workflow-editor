@@ -13,6 +13,7 @@ import type {WorkflowOperator} from "../schema/workflowSchema";
 import {isSourceArray} from "../typeguards";
 import OperatorDefinitionWrapper from "../schema/operatorDefinitionWrapper";
 import {customOperatorValidation} from "../customValidation";
+import ArrayBuilderNode from "./arrayBuilderNode";
 
 export interface OperatorNodeInfo {
     title: string;
@@ -79,7 +80,8 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
                 res.sources = {};
 
                 for (const [sourceName, sourceDef] of Object.entries(op.sources!)) {
-                    const sourceData = this.getInputDataByName(sourceName);
+                    const sourceSlot = this.findInputSlot(sourceName);
+                    const sourceData = this.getInputData(sourceSlot);
                     res.sources[sourceName] = sourceData;
 
                     if (sourceData === undefined && op.isSourceRequired(sourceName)) {
@@ -87,7 +89,15 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
                         isValid = false;
                     }
                     if (isSourceArray(sourceDef)) {
-                        // TODO validate inner type
+                        const sourceNode = this.getInputNode(sourceSlot);
+
+                        if (!(sourceNode instanceof ArrayBuilderNode)) {
+                            validationSummary.addError(NewNode.title, `Der Parameter "${sourceName}" erwartet ein Array aus ${sourceDef.innerType}-Datensätzen, das mit ${ArrayBuilderNode.title} erstellt wurde.`);
+                            isValid = false;
+                        } else if (sourceNode.combinedTypes !== sourceDef.innerType) {
+                            validationSummary.addError(NewNode.title, `Der Parameter "${sourceName}" erwartet ein Array aus ${sourceDef.innerType}-Datensätzen, aber es enthält ${sourceNode.combinedTypes}.`);
+                            isValid = false;
+                        }
                     }
                 }
             }
