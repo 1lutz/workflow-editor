@@ -95,10 +95,11 @@ export default class ParamsEditor {
 
         if (isValid) {
             console.log("saving", this.editor.getValue());
-            this.currentNode.params = this.editor.getValue();
+            this.currentNode.paramValues = this.editor.getValue();
             this.offcanvasBs.hide();
         } else {
-            this.currentNode.params = undefined;
+            // TODO communicate errors in popup or other?
+            //this.currentNode.paramValues = undefined;
         }
     }
 
@@ -121,14 +122,15 @@ export default class ParamsEditor {
                 disable_array_delete_last_row: true,
                 disable_edit_json: true,
                 use_default_values: false,
+                keep_oneof_values: false,
                 schema
             });
             this.oldSchema = schema;
-        } else if (this.editor.getValue() === currentNode.params) {
+        } else if (this.editor.getValue() === currentNode.paramValues) {
             console.log("value in existing editor did not change");
         } else {
             console.log("update value in existing editor");
-            this.editor.setValue(currentNode.params);
+            this.editor.setValue(currentNode.paramValues);
         }
         this.offcanvasBs.show();
     }

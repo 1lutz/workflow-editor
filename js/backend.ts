@@ -1,11 +1,7 @@
 import {checkedJsonFetch} from "./util";
-import {WorkflowSchema} from "./workflowSchema";
-import {GetDatasetSchema} from "./backendSchema";
-
-export enum DatasetType {
-    Raster = "raster",
-    Vector = "vector"
-}
+import {Workflow, WorkflowSchema} from "./workflowSchema";
+import type {ResultType, WorkflowMetadata} from "./backendSchema";
+import {GetDatasetResponse, RegisterWorkflowResponse, WorkflowMetadataResponse} from "./backendSchema";
 
 export class Backend {
     private readonly serverUrl: string;
@@ -21,32 +17,47 @@ export class Backend {
         return await WorkflowSchema.parseAsync(file);
     }
 
-    async ensureDatasetType(datasetName: string, expectedType: DatasetType): Promise<string | null> {
-        let res;
+    async getDatasetType(datasetName: string): Promise<ResultType> {
+        const res = await fetch(this.serverUrl + "/dataset/" + encodeURIComponent(datasetName), {
+            headers: {
+                Authorization: "Bearer " + this.token
+            }
+        });
+        const json = GetDatasetResponse.parse(await res.json());
 
-        try {
-            res = await fetch(this.serverUrl + "/dataset/" + encodeURIComponent(datasetName), {
-                headers: {
-                    Authorization: "Bearer " + this.token
-                }
-            });
-        } catch {
-            return "Es konnte keine Verbindung zum Server hergestellt werden, um die Existenz des angefragten Datensatzes zu prüfen.";
+        if ("error" in json) {
+            throw new Error(json.message);
         }
-        const json = GetDatasetSchema.safeParse(await res.json());
+        return json.resultDescriptor.type;
+    }
 
-        if (!json.success) {
-            return "Die Serverantwort ist in einem unerwarteten Format.";
-        }
+    async getWorkflowMetadata(workflow: Workflow): Promise<WorkflowMetadata> {
+        // TODO add POST /workflow/validate backend API
+        let res = await fetch(this.serverUrl + "/workflow", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + this.token
+            },
+            body: JSON.stringify(workflow)
+        });
+        const registerJson = RegisterWorkflowResponse.parse(await res.json());
 
-        if ("error" in json.data) {
-            return `Fehler beim Prüfen des Datensatzes "${datasetName}": ${json.data.message}`;
+        if ("error" in registerJson) {
+            throw new Error(registerJson.message);
         }
-        const foundType = json.data.resultDescriptor.type as DatasetType;
+        const workflowId = registerJson.id;
 
-        if (foundType !== expectedType) {
-            return `Es wird ein Datensatz vom Typ ${expectedType} erwartet, aber "${datasetName}" ist vom Typ ${foundType}.`;
+        res = await fetch(this.serverUrl + "/workflow/" + workflowId + "/metadata", {
+            headers: {
+                Authorization: "Bearer " + this.token
+            }
+        });
+        const metadataJson = WorkflowMetadataResponse.parse(await res.json());
+
+        if ("error" in metadataJson) {
+            throw new Error(metadataJson.message);
         }
-        return null;
+        return metadataJson;
     }
 }
