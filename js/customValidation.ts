@@ -1,5 +1,5 @@
-import type {WorkflowOperator} from "./workflowSchema";
-import {ResultType, FeatureDataType} from "./backendSchema";
+import type {WorkflowOperator} from "./schema/workflowSchema";
+import {ResultType, FeatureDataType} from "./schema/backendSchema";
 import {Backend} from "./backend";
 
 const dispatcher: Record<string, (backend: Backend, instance: WorkflowOperator) => Promise<string | undefined>> = {

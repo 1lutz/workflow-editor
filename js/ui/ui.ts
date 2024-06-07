@@ -1,10 +1,10 @@
 import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
 import {AnyModel} from "@anywidget/types";
-import WorkflowOutNode from "./workflowOutNode";
-import {LGraphCanvas_CONFIG_OVERRIDES, LiteGraph_CONFIG_OVERRIDES, WORKFLOW_OUT_NODE_TYPE} from "./constants";
-import {getValidationSummary} from "./util";
-import applyAllBugfixes from "./bugfixes";
-import {Workflow} from "./workflowSchema";
+import WorkflowOutNode from "../nodes/workflowOutNode";
+import {LGraphCanvas_CONFIG_OVERRIDES, LiteGraph_CONFIG_OVERRIDES, WORKFLOW_OUT_NODE_TYPE} from "../constants";
+import {getValidationSummary} from "../util";
+import applyAllBugfixes from "../bugfixes";
+import {Workflow} from "../schema/workflowSchema";
 import {ValidationSummary} from "./validationSummary";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */

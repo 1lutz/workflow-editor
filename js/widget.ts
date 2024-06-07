@@ -1,11 +1,11 @@
 import type {AnyModel, RenderContext} from "@anywidget/types";
-import type {OperatorDefinition, Workflow} from "./workflowSchema";
+import type {OperatorDefinition, Workflow} from "./schema/workflowSchema";
 import "litegraph.js/css/litegraph";
-import "./widget.css";
+import "./ui/widget.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {LGraph, LiteGraph} from "litegraph.js";
-import {registerWorkflowOperator} from "./operator";
-import WorkflowOutNode from "./workflowOutNode";
+import {registerWorkflowOperator} from "./nodes/operator";
+import WorkflowOutNode from "./nodes/workflowOutNode";
 import {
     OPERATOR_CATEGORY,
     PREDEFINED_NODE_TYPES,
@@ -14,8 +14,8 @@ import {
 import {isDatatypeDefinition} from "./typeguards";
 import {getDefinitionName} from "./util";
 import {Backend} from "./backend";
-import {createUI, type WidgetModel} from "./ui";
-import OperatorDefinitionWrapper from "./operatorDefinitionWrapper";
+import {createUI, type WidgetModel} from "./ui/ui";
+import OperatorDefinitionWrapper from "./schema/operatorDefinitionWrapper";
 
 function registerBackend(serverUrl: string, token: string, graph: LGraph) {
     const backend = new Backend(serverUrl, token);

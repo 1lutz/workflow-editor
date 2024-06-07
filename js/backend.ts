@@ -1,7 +1,7 @@
 import {checkedJsonFetch} from "./util";
-import {Workflow, WorkflowSchema} from "./workflowSchema";
-import type {ResultType, WorkflowMetadata} from "./backendSchema";
-import {GetDatasetResponse, RegisterWorkflowResponse, WorkflowMetadataResponse} from "./backendSchema";
+import {Workflow, WorkflowSchema} from "./schema/workflowSchema";
+import type {ResultType, WorkflowMetadata} from "./schema/backendSchema";
+import {GetDatasetResponse, RegisterWorkflowResponse, WorkflowMetadataResponse} from "./schema/backendSchema";
 
 export class Backend {
     private readonly serverUrl: string;

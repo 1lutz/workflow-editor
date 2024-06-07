@@ -1,6 +1,6 @@
 import {z} from "zod";
-import {cachedCheckedJsonFetch, getDefinitionName} from "./util";
-import {JSON_SCHEMA_URL} from "./constants";
+import {cachedCheckedJsonFetch, getDefinitionName} from "../util";
+import {JSON_SCHEMA_URL} from "../constants";
 import {validate} from "jsonschema";
 
 const JsonSchemaRef = z.object({
