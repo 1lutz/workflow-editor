@@ -1,5 +1,5 @@
-import type {JsonSchemaRef, Workflow, WorkflowOperator} from "./workflowSchema";
-import {LGraph} from "litegraph.js";
+import type {JsonSchemaRef, Workflow} from "./workflowSchema";
+import {LGraph, LGraphNode} from "litegraph.js";
 import {Backend} from "./backend";
 import {ValidationSummary} from "./validationSummary";
 
@@ -58,9 +58,9 @@ export function uppercaseFirstLetter(s: string): string {
     return s[0].toUpperCase() + s.substring(1);
 }
 
-export function buildWorkflow(operator: WorkflowOperator, inputType: string): Workflow {
+export function buildWorkflowFromInput(node: LGraphNode, slot: number): Workflow {
     return {
-        type: uppercaseFirstLetter(inputType),
-        operator
+        type: uppercaseFirstLetter(node.getInputDataType(slot)),
+        operator: node.getInputData(slot)
     };
 }
