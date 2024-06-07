@@ -1,6 +1,5 @@
 import {LGraphNode} from "litegraph.js";
-import {buildWorkflow, getValidationSummary} from "./util";
-import {WorkflowOperator} from "./workflowSchema";
+import {buildWorkflowFromInput, getValidationSummary} from "./util";
 
 export default class WorkflowOutNode extends LGraphNode {
     static title = "Workflow Out";
@@ -12,17 +11,16 @@ export default class WorkflowOutNode extends LGraphNode {
     }
 
     onExecute() {
-        const operator: WorkflowOperator = this.getInputData(0);
+        const workflow = buildWorkflowFromInput(this, 0);
 
-        if (operator) {
-            const workflow = buildWorkflow(operator, this.getInputDataType(0));
+        if (workflow.operator) {
             this.graph?.setOutputData(WorkflowOutNode.title, workflow);
             this.has_errors = false;
         } else {
             this.has_errors = true;
 
             if (this.graph) {
-                this.graph.setOutputData("Workflow Out", null);
+                this.graph.setOutputData(WorkflowOutNode.title, null);
                 getValidationSummary(this.graph).addError(WorkflowOutNode.title, "Der Eingabedatensatz fehlt. Verbinde diesen Operator mit einem anderen Operator, zum Beispiel \"GdalSource\".");
             }
         }
