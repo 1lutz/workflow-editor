@@ -2,7 +2,9 @@ export const OPERATOR_CATEGORY = "geoengine";
 
 export const WORKFLOW_OUT_NODE_TYPE = OPERATOR_CATEGORY + "/workflowout";
 
-export const PREDEFINED_NODE_TYPES = [WORKFLOW_OUT_NODE_TYPE];
+export const ARRAY_BUILDER_NODE_TYPE = OPERATOR_CATEGORY + "/arraybuilder";
+
+export const PREDEFINED_NODE_TYPES = [WORKFLOW_OUT_NODE_TYPE, ARRAY_BUILDER_NODE_TYPE];
 
 export const JSON_SCHEMA_URL = "https://json-schema.org/draft-07/schema";
 

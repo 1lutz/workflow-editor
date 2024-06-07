@@ -7,6 +7,7 @@ import {LGraph, LiteGraph} from "litegraph.js";
 import {registerWorkflowOperator} from "./nodes/operator";
 import WorkflowOutNode from "./nodes/workflowOutNode";
 import {
+    ARRAY_BUILDER_NODE_TYPE,
     OPERATOR_CATEGORY,
     PREDEFINED_NODE_TYPES,
     WORKFLOW_OUT_NODE_TYPE
@@ -16,6 +17,7 @@ import {getDefinitionName} from "./util";
 import {Backend} from "./backend";
 import {createUI, type WidgetModel} from "./ui/ui";
 import OperatorDefinitionWrapper from "./schema/operatorDefinitionWrapper";
+import ArrayBuilderNode from "./nodes/arrayBuilderNode";
 
 function registerBackend(serverUrl: string, token: string, graph: LGraph) {
     const backend = new Backend(serverUrl, token);
@@ -48,6 +50,7 @@ export function render({model, el}: RenderContext<WidgetModel>) {
     const graph = createUI(model, el);
     graph.addOutput("Workflow Out", "raster,vector,plot", null);
     LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
+    LiteGraph.registerNodeType(ARRAY_BUILDER_NODE_TYPE, ArrayBuilderNode);
 
     const initialServerUrl = model.get("serverUrl");
     const initalToken = model.get("token");
