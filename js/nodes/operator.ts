@@ -7,12 +7,12 @@ import {
     LiteGraph,
     Vector2
 } from "litegraph.js";
-import {OPERATOR_CATEGORY} from "./constants";
-import {getBackend, getValidationSummary, isEmpty} from "./util";
-import type {WorkflowOperator} from "./workflowSchema";
-import {isSourceArray} from "./typeguards";
-import OperatorDefinitionWrapper from "./operatorDefinitionWrapper";
-import {customOperatorValidation} from "./customValidation";
+import {OPERATOR_CATEGORY} from "../constants";
+import {getBackend, getValidationSummary, isEmpty} from "../util";
+import type {WorkflowOperator} from "../schema/workflowSchema";
+import {isSourceArray} from "../typeguards";
+import OperatorDefinitionWrapper from "../schema/operatorDefinitionWrapper";
+import {customOperatorValidation} from "../customValidation";
 
 export interface OperatorNodeInfo {
     title: string;

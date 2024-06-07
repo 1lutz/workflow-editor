@@ -1,6 +1,6 @@
 import type {OperatorDefinition, OperatorDefinitionSource, OperatorDefinitionParam} from "./workflowSchema";
-import {OperatorNodeInfo} from "./operator";
-import ParamsEditor from "./paramsEditor";
+import {OperatorNodeInfo} from "../nodes/operator";
+import ParamsEditor from "../ui/paramsEditor";
 
 export default class OperatorDefinitionWrapper {
     private readonly data: OperatorDefinition;

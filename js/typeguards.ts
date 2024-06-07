@@ -1,4 +1,4 @@
-import type {DatatypeDefinition} from "./workflowSchema";
+import type {DatatypeDefinition} from "./schema/workflowSchema";
 
 export function isDatatypeDefinition(arg: any): arg is DatatypeDefinition {
     return arg && typeof arg.oneOf === "object";

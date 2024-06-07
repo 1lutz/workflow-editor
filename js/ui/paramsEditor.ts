@@ -1,9 +1,9 @@
 import {Offcanvas} from "bootstrap";
-import {OperatorDefinitionParams} from "./workflowSchema";
-import {PARAMS_EDITOR_ID} from "./constants";
+import {OperatorDefinitionParams} from "../schema/workflowSchema";
+import {PARAMS_EDITOR_ID} from "../constants";
 // @ts-ignore
 import {JSONEditor} from "@json-editor/json-editor/dist/jsoneditor";
-import {OperatorNodeInfo} from "./operator";
+import {OperatorNodeInfo} from "../nodes/operator";
 
 type ParamsEditorDiv = HTMLElement & {
     instance?: ParamsEditor;

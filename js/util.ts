@@ -1,7 +1,7 @@
-import type {JsonSchemaRef, Workflow} from "./workflowSchema";
+import type {JsonSchemaRef, Workflow} from "./schema/workflowSchema";
 import {LGraph, LGraphNode} from "litegraph.js";
 import {Backend} from "./backend";
-import {ValidationSummary} from "./validationSummary";
+import {ValidationSummary} from "./ui/validationSummary";
 
 export function getDefinitionName(ref: JsonSchemaRef) {
     return ref.$ref.substring(14);
