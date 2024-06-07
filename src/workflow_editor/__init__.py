@@ -19,8 +19,7 @@ class WorkflowEditor(anywidget.AnyWidget):
     token = traitlets.Unicode().tag(sync=True)
     workflow = traitlets.Dict(
         default_value=None,
-        allow_none=True,
-        read_only=True
+        allow_none=True
     )\
         .tag(sync=True)
 

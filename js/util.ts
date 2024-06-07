@@ -1,4 +1,4 @@
-import type {JsonSchemaRef} from "./workflowSchema";
+import type {JsonSchemaRef, Workflow, WorkflowOperator} from "./workflowSchema";
 import {LGraph} from "litegraph.js";
 import {Backend} from "./backend";
 import {ValidationSummary} from "./validationSummary";
@@ -52,4 +52,15 @@ export function isEmpty(arg: undefined | object | any[]): boolean {
     } else {
         return Object.keys(arg).length === 0;
     }
+}
+
+export function uppercaseFirstLetter(s: string): string {
+    return s[0].toUpperCase() + s.substring(1);
+}
+
+export function buildWorkflow(operator: WorkflowOperator, inputType: string): Workflow {
+    return {
+        type: uppercaseFirstLetter(inputType),
+        operator
+    };
 }

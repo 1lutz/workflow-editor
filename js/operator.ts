@@ -7,42 +7,21 @@ import {
     LiteGraph,
     Vector2
 } from "litegraph.js";
-import {OPERATOR_CATEGORY, RASTER_REF_FORMAT, VECTOR_REF_FORMAT} from "./constants";
+import {OPERATOR_CATEGORY} from "./constants";
 import {getBackend, getValidationSummary, isEmpty} from "./util";
-import type {OperatorDefinitionSource, WorkflowOperator, OperatorDefinitionParams} from "./workflowSchema";
-import {OperatorDefinitionParam} from "./workflowSchema";
-import {Backend, DatasetType} from "./backend";
+import type {WorkflowOperator} from "./workflowSchema";
 import {isSourceArray} from "./typeguards";
 import OperatorDefinitionWrapper from "./operatorDefinitionWrapper";
+import {customOperatorValidation} from "./customValidation";
 
 export interface OperatorNodeInfo {
     title: string;
-    params?: OperatorDefinitionParams;
+    paramValues: object;
     help_url: string;
 }
 
 function openInNewTab(url: string) {
     window.open(url, "_blank");
-}
-
-export async function customValidationOk(backend: Backend, instance: unknown, schema: OperatorDefinitionParam | OperatorDefinitionSource): Promise<string | null> {
-    try {
-        if ("format" in schema && typeof instance === "string") {
-            if (schema.format === RASTER_REF_FORMAT) {
-                return await backend.ensureDatasetType(instance, DatasetType.Raster);
-            }
-            if (schema.format === VECTOR_REF_FORMAT) {
-                return await backend.ensureDatasetType(instance, DatasetType.Vector);
-            }
-        }
-        if ("innerType" in schema && typeof schema.innerType === "string") {
-            console.log("Validate source array", instance, "against schema", schema);
-        }
-    } catch (err: any) {
-        //return "Error during custom validation of \"" + instance + "\" with", schema, ":", err;
-        return `Ein Fehler ist beim Validieren von "${JSON.stringify(instance)}" gegen das Schema ${JSON.stringify(schema, null, 4)} aufgetreten: ${err.message}`;
-    }
-    return null;
 }
 
 export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
@@ -63,7 +42,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
     class NewNode extends LGraphNode implements OperatorNodeInfo {
         static title = op.title;
         static desc = op.description;
-        params?: OperatorDefinitionParams;
+        paramValues: object = {};
 
         constructor() {
             super(NewNode.title);
@@ -86,64 +65,48 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             const backend = getBackend(this.graph!);
             const validationSummary = getValidationSummary(this.graph!);
 
-            if (!this.params) {
-                this.has_errors = true;
-                validationSummary.addError(NewNode.title, `Die Konfigurationsparameter wurden nicht richtig angegeben.`);
-                return;
-            }
             let isValid = true;
 
-            for (const [paramName, paramVal] of Object.entries(this.params)) {
-                const customErrorMessage = await customValidationOk(backend, paramVal, op.params![paramName]);
+            let res: WorkflowOperator = {
+                type: op.id,
+                params: this.paramValues
+            };
+            if (isEmpty(this.paramValues) && !isEmpty(op.params)) {
+                validationSummary.addError(NewNode.title, "Die Konfigurationsparameter wurden nicht angegeben.");
+                isValid = false;
+            }
+            if (!isEmpty(op.sources)) {
+                res.sources = {};
+
+                for (const [sourceName, sourceDef] of Object.entries(op.sources!)) {
+                    const sourceData = this.getInputDataByName(sourceName);
+                    res.sources[sourceName] = sourceData;
+
+                    if (sourceData === undefined && op.isSourceRequired(sourceName)) {
+                        validationSummary.addError(NewNode.title, `Der Parameter "${sourceName}" erwartet Daten, es wurden aber keine eingegeben.`);
+                        isValid = false;
+                    }
+                    if (isSourceArray(sourceDef)) {
+                        // TODO validate inner type
+                    }
+                }
+            }
+            if (isValid) {
+                const customErrorMessage = await customOperatorValidation(backend, res);
 
                 if (typeof customErrorMessage === "string") {
                     validationSummary.addError(NewNode.title, customErrorMessage);
                     isValid = false;
                 }
             }
-            for (const [sourceName, sourceDef] of Object.entries(op.sources || {})) {
-                const checkSet = op.isSourceRequired(sourceName);
-                const checkSchema = isSourceArray(sourceDef);
 
-                if (checkSet || checkSchema) {
-                    const instance = this.getInputDataByName(sourceName);
-
-                    if (checkSet && instance === undefined) {
-                        validationSummary.addError(NewNode.title, `Der Parameter "${sourceName}" erwartet Daten, es wurden aber keine eingegeben.`);
-                        return false;
-                    }
-                    if (checkSchema) {
-                        const customErrorMessage = await customValidationOk(backend, instance, sourceDef);
-
-                        if (typeof customErrorMessage === "string") {
-                            validationSummary.addError(NewNode.title, customErrorMessage);
-                            return false;
-                        }
-                    }
-                }
-            }
             if (isValid) {
                 this.has_errors = false;
+                this.setOutputData(0, res);
             } else {
                 this.has_errors = true;
                 this.setOutputData(0, undefined);
-                return;
             }
-            let res: WorkflowOperator = {
-                type: op.id,
-                params: this.params
-            };
-            if (!isEmpty(op.sources)) {
-                res.sources = {};
-
-                for (const sourceName of Object.keys(op.sources!)) {
-                    const sourceData = this.getInputDataByName(sourceName);
-                    if (sourceData === undefined) return;
-
-                    res.sources[sourceName] = sourceData;
-                }
-            }
-            this.setOutputData(0, res);
         }
 
         getExtraMenuOptions(): ContextMenuItem[] {

@@ -1,7 +1,6 @@
 import {LGraphNode} from "litegraph.js";
-import {getValidationSummary} from "./util";
-
-import {Workflow, WorkflowOperator} from "./workflowSchema";
+import {buildWorkflow, getValidationSummary} from "./util";
+import {WorkflowOperator} from "./workflowSchema";
 
 export default class WorkflowOutNode extends LGraphNode {
     static title = "Workflow Out";
@@ -16,9 +15,7 @@ export default class WorkflowOutNode extends LGraphNode {
         const operator: WorkflowOperator = this.getInputData(0);
 
         if (operator) {
-            let type = this.getInputDataType(0);
-            type = type[0].toUpperCase() + type.substring(1);
-            const workflow: Workflow = {type, operator};
+            const workflow = buildWorkflow(operator, this.getInputDataType(0));
             this.graph?.setOutputData(WorkflowOutNode.title, workflow);
             this.has_errors = false;
         } else {
