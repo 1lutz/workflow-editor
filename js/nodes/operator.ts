@@ -31,14 +31,18 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
     Object.values(op.sources || {})
         .filter(sourceDef => !isSourceArray(sourceDef))
         .forEach(sourceDef => {
-            // @ts-ignore
-            let defaultOut: string[] = LiteGraph.slot_types_default_out[sourceDef.pinType];
-            if (!defaultOut.includes(nodeId)) defaultOut.push(nodeId);
+            for (const singleInputType of sourceDef.pinType.split(",")) {
+                // @ts-ignore
+                let defaultOut: string[] = LiteGraph.slot_types_default_out[singleInputType];
+                if (!defaultOut.includes(nodeId)) defaultOut.push(nodeId);
+            }
         });
 
-    // @ts-ignore
-    let defaultIn: string[] = LiteGraph.slot_types_default_in[op.outputType];
-    defaultIn.push(nodeId);
+    if (!op.hasDynamicOutputType) {
+        // @ts-ignore
+        let defaultIn: string[] = LiteGraph.slot_types_default_in[op.outputTypeOnStart];
+        defaultIn.push(nodeId);
+    }
 
     class NewNode extends LGraphNode implements OperatorNodeInfo {
         static title = op.title;
@@ -51,7 +55,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             if (!isEmpty(op.sources)) {
                 this.addInputs(Object.entries(op.sources!).map(([sourceName, sourceDef]) => [sourceName, sourceDef.pinType, undefined]));
             }
-            this.addOutput("out", op.outputType);
+            this.addOutput("out", op.outputTypeOnStart);
 
             if (!isEmpty(op.params)) {
                 this.addWidget("button", "params", "", this.edit.bind(this));
@@ -60,6 +64,21 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
 
         edit() {
             op.showParamsEditor(this);
+        }
+
+        onConnectInput(_inputIndex: number, newOutputType: INodeOutputSlot["type"]): boolean {
+            // Note: this works correctly because when the output is dynamic
+            // OperatorDefinitionWrapper ensures there is only one input.
+
+            if (op.hasDynamicOutputType) {
+                const oldOutputType = this.getOutputInfo(0)!.type;
+
+                if (newOutputType !== oldOutputType) {
+                    this.disconnectOutput(0);
+                    this.setOutputDataType(0, newOutputType);
+                }
+            }
+            return true;
         }
 
         async onExecute() {

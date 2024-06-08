@@ -1,14 +1,19 @@
 import type {OperatorDefinition, OperatorDefinitionSource, OperatorDefinitionParam} from "./workflowSchema";
 import {OperatorNodeInfo} from "../nodes/operator";
 import ParamsEditor from "../ui/paramsEditor";
+import {DYNAMIC_OUTPUT_TYPE_MARKER} from "../constants";
 
 export default class OperatorDefinitionWrapper {
     private readonly data: OperatorDefinition;
-    public readonly outputType: string;
+    private readonly definedOutputType: string;
 
     constructor(data: OperatorDefinition, outputType: string) {
         this.data = data;
-        this.outputType = outputType;
+        this.definedOutputType = outputType;
+
+        if (this.hasDynamicOutputType && (!this.sources || Object.values(this.sources).length !== 1)) {
+            throw new Error(`The operator ${this.id} has a dynamic output type. For that to work it must have exactly one source.`);
+        }
     }
 
     get id(): string {
@@ -45,5 +50,13 @@ export default class OperatorDefinitionWrapper {
 
     showParamsEditor(currentNode: OperatorNodeInfo) {
         ParamsEditor.Instance.show(currentNode, this.data.properties.params);
+    }
+
+    get hasDynamicOutputType(): boolean {
+        return this.definedOutputType === DYNAMIC_OUTPUT_TYPE_MARKER;
+    }
+
+    get outputTypeOnStart(): string {
+        return this.hasDynamicOutputType ? Object.values(this.sources!)[0].pinType : this.definedOutputType;
     }
 }
