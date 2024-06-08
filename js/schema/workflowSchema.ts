@@ -28,13 +28,19 @@ const OperatorDefinitionParams = z.object({
 export type OperatorDefinitionParams = z.infer<typeof OperatorDefinitionParams>;
 
 const OperatorDefinitionSource = z.union([
+    // normal raster, vector or plot source
     JsonSchemaRef,
-    z.object({ items: JsonSchemaRef })
+    // array of sources
+    z.object({items: JsonSchemaRef}),
+    // union of sources
+    z.object({anyOf: z.array(JsonSchemaRef)})
 ]).transform(source => "$ref" in source ? {
     pinType: getDefinitionName(source)
-} : {
+} : "items" in source ? {
     pinType: "array",
     innerType: getDefinitionName(source.items)
+} : {
+    pinType: source.anyOf.map(getDefinitionName).join()
 });
 
 export type OperatorDefinitionSource = z.infer<typeof OperatorDefinitionSource>;
