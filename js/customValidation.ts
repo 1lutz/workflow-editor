@@ -3,25 +3,41 @@ import {ResultType, FeatureDataType} from "./schema/backendSchema";
 import {Backend} from "./backend";
 import {LGraphNode} from "litegraph.js";
 import {buildWorkflowFromInput} from "./util";
+import {isPromise} from "./typeguards";
 
-const dispatcher: Record<string, (backend: Backend, instance: WorkflowOperator, node: LGraphNode) => Promise<string | undefined>> = {
+type ValidationMessage = string | undefined;
+
+const dispatcher: Record<string, (instance: WorkflowOperator, backend: Backend, node: LGraphNode) => Promise<ValidationMessage> | ValidationMessage> = {
     GdalSource: validateGdalSource,
     OgrSource: validateOgrSource,
+    NeighborhoodAggregate: validateNeighborhoodAggregate,
     ColumnRangeFilter: validateColumnRangeFilter
 };
 
-export function customOperatorValidation(backend: Backend, instance: WorkflowOperator, node: LGraphNode): Promise<string | undefined> {
+export function customOperatorValidation(instance: WorkflowOperator, backend: Backend, node: LGraphNode): Promise<ValidationMessage> {
     const validator = dispatcher[instance.type];
 
     if (validator) {
-        return validator(backend, instance, node)
-            .catch(err => "Fehler beim Validieren: " + err.message);
+        try {
+            const res = validator(instance, backend, node);
+
+            if (isPromise(res))
+                return res.catch(err => {
+                    // Validator was async and threw an unexpected error
+                    return "Fehler beim Validieren: " + err.message;
+                });
+            else
+                return Promise.resolve(res);
+        } catch (err: any) {
+            // Validator was sync and threw an unexpected error
+            return Promise.resolve("Fehler beim Validieren: " + err.message);
+        }
     } else {
         return Promise.resolve(undefined);
     }
 }
 
-async function assertDatasetType(backend: Backend, instance: WorkflowOperator, expectedType: string) {
+async function assertDatasetType(instance: WorkflowOperator, backend: Backend, expectedType: string) {
     const datasetName: string = instance.params.data;
     const foundType = await backend.getDatasetType(datasetName);
 
@@ -30,19 +46,37 @@ async function assertDatasetType(backend: Backend, instance: WorkflowOperator, e
     }
 }
 
-function validateGdalSource(backend: Backend, instance: WorkflowOperator) {
+function validateGdalSource(instance: WorkflowOperator, backend: Backend) {
     const expectedType = ResultType.enum.raster;
 
-    return assertDatasetType(backend, instance, expectedType);
+    return assertDatasetType(instance, backend, expectedType);
 }
 
-async function validateOgrSource(backend: Backend, instance: WorkflowOperator) {
+async function validateOgrSource(instance: WorkflowOperator, backend: Backend) {
     const expectedType = ResultType.enum.vector;
 
-    return assertDatasetType(backend, instance, expectedType);
+    return assertDatasetType(instance, backend, expectedType);
 }
 
-async function validateColumnRangeFilter(backend: Backend, instance: WorkflowOperator, node: LGraphNode) {
+function validateNeighborhoodAggregate(instance: WorkflowOperator) {
+    if (instance.params.neighborhood.type === "weightsMatrix") {
+        const weights: number[][] = instance.params.neighborhood.weights;
+        const columnCount = weights.length;
+
+        if (columnCount % 2 === 0) {
+            return "Die Gewichtungsmatrix muss ungerade Dimensionen haben.";
+        }
+        for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+            const currentRowLength = weights[columnIndex].length;
+
+            if (currentRowLength !== columnCount) {
+                return `Es gibt ${columnCount} Spalten. Daher muss jede Zeile ${columnCount} Zellen besitzen. Zeile ${columnIndex + 1} hat aber ${currentRowLength} Zellen.`;
+            }
+        }
+    }
+}
+
+async function validateColumnRangeFilter(instance: WorkflowOperator, backend: Backend, node: LGraphNode) {
     const workflow = buildWorkflowFromInput(node, 0);
     const workflowMetadata = await backend.getWorkflowMetadata(workflow);
 
