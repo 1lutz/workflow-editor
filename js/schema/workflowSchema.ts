@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {cachedCheckedJsonFetch, getDefinitionName} from "../util";
+import {checkedJsonFetchWithCache, getDefinitionName} from "../util";
 import {JSON_SCHEMA_URL} from "../constants";
 import {validate} from "jsonschema";
 
@@ -75,7 +75,7 @@ export type DatatypeDefinition = z.infer<typeof DatatypeDefinition>;
 export const WorkflowSchema = z.object({
     definitions: z.record(z.string(), z.union([OperatorDefinition, DatatypeDefinition]))
 }).refine(async (editorSchema) => {
-    const jsonSchema = await cachedCheckedJsonFetch(JSON_SCHEMA_URL);
+    const jsonSchema = await checkedJsonFetchWithCache(JSON_SCHEMA_URL);
     return validate(editorSchema, jsonSchema).valid;
 }, "The operator definition file must be valid json schema");
 

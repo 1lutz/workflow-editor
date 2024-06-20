@@ -121,7 +121,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
                 }
             }
             if (isValid) {
-                const customErrorMessage = await customOperatorValidation(backend, res);
+                const customErrorMessage = await customOperatorValidation(backend, res, this);
 
                 if (typeof customErrorMessage === "string") {
                     validationSummary.addError(NewNode.title, customErrorMessage);
@@ -174,6 +174,17 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
 
         get help_url(): string {
             return op.help_url;
+        }
+
+        get inputTypes(): Map<string, string> {
+            const map = new Map();
+
+            for (let slot = 0; slot < this.inputs.length; slot++) {
+                const name = this.getInputInfo(slot)!.name;
+                const type = this.getInputDataType(slot);
+                map.set(name, type);
+            }
+            return map;
         }
     }
 

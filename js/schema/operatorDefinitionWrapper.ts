@@ -1,5 +1,5 @@
 import type {OperatorDefinition, OperatorDefinitionSource, OperatorDefinitionParam} from "./workflowSchema";
-import {OperatorNodeInfo} from "../nodes/operator";
+import {OperatorNodeInfo} from "../nodes/operatorNode";
 import ParamsEditor from "../ui/paramsEditor";
 import {DYNAMIC_OUTPUT_TYPE_MARKER} from "../constants";
 
