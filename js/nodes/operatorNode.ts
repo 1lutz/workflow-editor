@@ -121,7 +121,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
                 }
             }
             if (isValid) {
-                const customErrorMessage = await customOperatorValidation(backend, res, this);
+                const customErrorMessage = await customOperatorValidation(res, backend, this);
 
                 if (typeof customErrorMessage === "string") {
                     validationSummary.addError(NewNode.title, customErrorMessage);

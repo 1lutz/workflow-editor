@@ -121,7 +121,7 @@ export default class ParamsEditor {
                 iconlib: "fontawesome5",
                 disable_array_delete_last_row: true,
                 disable_edit_json: true,
-                use_default_values: false,
+                //use_default_values: false,
                 keep_oneof_values: false,
                 schema
             });
