@@ -1,18 +1,20 @@
 import type {WorkflowOperator} from "./schema/workflowSchema";
 import {ResultType, FeatureDataType} from "./schema/backendSchema";
 import {Backend} from "./backend";
+import {LGraphNode} from "litegraph.js";
+import {buildWorkflowFromInput} from "./util";
 
-const dispatcher: Record<string, (backend: Backend, instance: WorkflowOperator) => Promise<string | undefined>> = {
+const dispatcher: Record<string, (backend: Backend, instance: WorkflowOperator, node: LGraphNode) => Promise<string | undefined>> = {
     GdalSource: validateGdalSource,
     OgrSource: validateOgrSource,
     ColumnRangeFilter: validateColumnRangeFilter
 };
 
-export function customOperatorValidation(backend: Backend, instance: WorkflowOperator): Promise<string | undefined> {
+export function customOperatorValidation(backend: Backend, instance: WorkflowOperator, node: LGraphNode): Promise<string | undefined> {
     const validator = dispatcher[instance.type];
 
     if (validator) {
-        return validator(backend, instance)
+        return validator(backend, instance, node)
             .catch(err => "Fehler beim Validieren: " + err.message);
     } else {
         return Promise.resolve(undefined);
@@ -40,19 +42,22 @@ async function validateOgrSource(backend: Backend, instance: WorkflowOperator) {
     return assertDatasetType(backend, instance, expectedType);
 }
 
-async function validateColumnRangeFilter(backend: Backend, instance: WorkflowOperator) {
-    throw new Error("Not fully implemented");
-    const workflowMetadata = await backend.getWorkflowMetadata(instance.sources!.vector as WorkflowOperator);
+async function validateColumnRangeFilter(backend: Backend, instance: WorkflowOperator, node: LGraphNode) {
+    const workflow = buildWorkflowFromInput(node, 0);
+    const workflowMetadata = await backend.getWorkflowMetadata(workflow);
 
     const expectedName: string = instance.params.column;
     const foundColumnMeta = workflowMetadata.columns[expectedName];
 
     if (!foundColumnMeta) {
-        return `Die Quelle enthält keine Spalte mit dem Namen "${expectedName}"`;
+        return `Die Quelle enthält keine Spalte mit dem Namen "${expectedName}".`;
     }
 
     const expectedType = instance.params.ranges.length > 0 ? typeof instance.params.ranges[0][0] : undefined;
 
+    if (!expectedType) {
+        return undefined;
+    }
     if (foundColumnMeta.dataType === FeatureDataType.enum.text) {
         if (expectedType !== "string") {
             return `Die Spalte "${expectedName}" ist vom Typ ${foundColumnMeta.dataType}, aber die Range besteht nicht aus Strings.`;

@@ -3,7 +3,7 @@ import {OperatorDefinitionParams} from "../schema/workflowSchema";
 import {PARAMS_EDITOR_ID} from "../constants";
 // @ts-ignore
 import {JSONEditor} from "@json-editor/json-editor/dist/jsoneditor";
-import {OperatorNodeInfo} from "../nodes/operator";
+import {OperatorNodeInfo} from "../nodes/operatorNode";
 
 type ParamsEditorDiv = HTMLElement & {
     instance?: ParamsEditor;
