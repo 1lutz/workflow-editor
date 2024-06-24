@@ -8,7 +8,7 @@ import {
     Vector2
 } from "litegraph.js";
 import {OPERATOR_CATEGORY} from "../constants";
-import {getBackend, getValidationSummary, isEmpty} from "../util";
+import {clippedString, getBackend, getValidationSummary, isEmpty} from "../util";
 import type {WorkflowOperator} from "../schema/workflowSchema";
 import {isSourceArray} from "../typeguards";
 import OperatorDefinitionWrapper from "../schema/operatorDefinitionWrapper";
@@ -45,9 +45,23 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
     }
 
     class NewNode extends LGraphNode implements OperatorNodeInfo {
+        private static readonly MARGIN = 6;
+        private static readonly INFO_LINE_HEIGHT = 12;
+        private static readonly NODE_WIDTH = 160;
+
         static title = op.title;
         static desc = op.description;
-        paramValues: object = {};
+
+        private _paramValues: Record<string, any> = {};
+
+        get paramValues() {
+            return this._paramValues;
+        }
+
+        set paramValues(newValue) {
+            this._paramValues = newValue;
+            this.setDirtyCanvas(false, true);
+        }
 
         constructor() {
             super(NewNode.title);
@@ -62,7 +76,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             }
         }
 
-        edit() {
+        private edit() {
             op.showParamsEditor(this);
         }
 
@@ -172,19 +186,45 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             }
         }
 
-        get help_url(): string {
-            return op.help_url;
+        private getInfoStartY(): number {
+            const rows = Math.max(this.inputs.length, this.outputs.length);
+            let y = rows * LiteGraph.NODE_SLOT_HEIGHT;
+
+            if (!isEmpty(op.params)) {
+                y += 2 * LiteGraph.NODE_WIDGET_HEIGHT;
+            }
+            return y;
         }
 
-        get inputTypes(): Map<string, string> {
-            const map = new Map();
+        onDrawBackground(ctx: CanvasRenderingContext2D) {
+            ctx.font = "10px Arial";
+            ctx.fillStyle = "white";
+            ctx.textAlign = "left";
 
-            for (let slot = 0; slot < this.inputs.length; slot++) {
-                const name = this.getInputInfo(slot)!.name;
-                const type = this.getInputDataType(slot);
-                map.set(name, type);
+            const paramNames = Object.keys(op.params || {});
+
+            for (let i = 0; i < paramNames.length; i++) {
+                const paramName = paramNames[i];
+                const paramValue = this.paramValues[paramName];
+                const originalLine = paramName + ": " + JSON.stringify(paramValue);
+                const line = clippedString(originalLine, NewNode.NODE_WIDTH - 2 * NewNode.MARGIN, ctx);
+                ctx.fillText(
+                    line,
+                    NewNode.MARGIN,
+                    this.getInfoStartY() + i * NewNode.INFO_LINE_HEIGHT
+                );
             }
-            return map;
+        }
+
+        computeSize(): [number, number] {
+            return [
+                NewNode.NODE_WIDTH,
+                this.getInfoStartY() + Math.max(0, (Object.keys(op.params || {}).length - 1) * NewNode.INFO_LINE_HEIGHT) + NewNode.MARGIN
+            ];
+        }
+
+        get help_url(): string {
+            return op.help_url;
         }
     }
 
