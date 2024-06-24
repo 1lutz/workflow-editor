@@ -79,3 +79,38 @@ export function buildWorkflowFromInput(node: LGraphNode, slot: number): Workflow
         operator: node.getInputData(slot)
     };
 }
+
+export function binarySearch(max: number, getValueAt: (index: number) => number, match: number): number {
+    let min = 0;
+
+    while (min <= max) {
+        const guess = Math.floor((min + max) / 2);
+        const value = getValueAt(guess);
+
+        if (value === match) {
+            return guess;
+        } else if (value < match) {
+            min = guess + 1;
+        } else {
+            max = guess - 1;
+        }
+    }
+    return max;
+}
+
+export function clippedString(str: string, maxWidth: number, ctx: CanvasRenderingContext2D): string {
+    const ellipsis = "…";
+
+    const textWidth = ctx.measureText(str).width;
+    const ellipsisWidth = ctx.measureText(ellipsis).width;
+
+    if (textWidth <= maxWidth || textWidth <= ellipsisWidth) {
+        return str;
+    }
+    const index = binarySearch(
+        str.length,
+        guess => ctx.measureText(str.substring(0, guess)).width,
+        maxWidth - ellipsisWidth
+    );
+    return str.substring(0, index) + ellipsis;
+}
