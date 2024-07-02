@@ -14,14 +14,14 @@ const JsonSchemaLinks = z.array(z.object({
     href: z.string()
 })).optional();
 
-const OperatorDefinitionParam = z.object({
-}).passthrough();
+const OperatorDefinitionParam = z.object({}).passthrough();
 
 export type OperatorDefinitionParam = z.infer<typeof OperatorDefinitionParam>;
 
 const OperatorDefinitionParams = z.object({
     properties: z.record(z.string(), OperatorDefinitionParam),
-    required: z.array(z.string())
+    required: z.array(z.string()),
+    oneOf: z.array(OperatorDefinitionParam)
 }).partial();
 
 export type OperatorDefinitionParams = z.infer<typeof OperatorDefinitionParams>;

@@ -8,12 +8,13 @@ import {
     Vector2
 } from "litegraph.js";
 import {OPERATOR_CATEGORY} from "../constants";
-import {clippedString, getBackend, getValidationSummary, isEmpty} from "../util";
+import {getBackend, getValidationSummary, isEmpty} from "../util";
 import type {WorkflowOperator} from "../schema/workflowSchema";
 import {isSourceArray} from "../typeguards";
 import OperatorDefinitionWrapper from "../schema/operatorDefinitionWrapper";
 import {customOperatorValidation} from "../customValidation";
 import ArrayBuilderNode from "./arrayBuilderNode";
+import ParamsView from "../ui/paramsView";
 
 export interface OperatorNodeInfo {
     title: string;
@@ -45,14 +46,11 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
     }
 
     class NewNode extends LGraphNode implements OperatorNodeInfo {
-        private static readonly MARGIN = 6;
-        private static readonly INFO_LINE_HEIGHT = 12;
-        private static readonly NODE_WIDTH = 160;
-
         static title = op.title;
         static desc = op.description;
 
         private _paramValues: Record<string, any> = {};
+        private _paramsWidget?: ParamsView = undefined;
 
         get paramValues() {
             return this._paramValues;
@@ -60,7 +58,9 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
 
         set paramValues(newValue) {
             this._paramValues = newValue;
-            this.setDirtyCanvas(false, true);
+            this._paramsWidget!.value = newValue;
+            this.setSize(this.computeSize());
+            //this.setDirtyCanvas(false, true);
         }
 
         constructor() {
@@ -71,12 +71,13 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             }
             this.addOutput("out", op.outputTypeOnStart);
 
-            if (!isEmpty(op.params)) {
-                this.addWidget("button", "params", "", this.edit.bind(this));
+            if (op.hasParams) {
+                this.addWidget("button", "edit params", "", this.editParams.bind(this));
+                this.addCustomWidget(this._paramsWidget = new ParamsView());
             }
         }
 
-        private edit() {
+        private editParams() {
             op.showParamsEditor(this);
         }
 
@@ -105,7 +106,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
                 type: op.id,
                 params: this.paramValues
             };
-            if (isEmpty(this.paramValues) && !isEmpty(op.params)) {
+            if (isEmpty(this.paramValues) && op.hasParams) {
                 validationSummary.addError(NewNode.title, "Die Konfigurationsparameter wurden nicht angegeben.");
                 isValid = false;
             }
@@ -184,43 +185,6 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             } else {
                 return [];
             }
-        }
-
-        private getInfoStartY(): number {
-            const rows = Math.max(this.inputs.length, this.outputs.length);
-            let y = rows * LiteGraph.NODE_SLOT_HEIGHT;
-
-            if (!isEmpty(op.params)) {
-                y += 2 * LiteGraph.NODE_WIDGET_HEIGHT;
-            }
-            return y;
-        }
-
-        onDrawBackground(ctx: CanvasRenderingContext2D) {
-            ctx.font = "10px Arial";
-            ctx.fillStyle = "white";
-            ctx.textAlign = "left";
-
-            const paramNames = Object.keys(op.params || {});
-
-            for (let i = 0; i < paramNames.length; i++) {
-                const paramName = paramNames[i];
-                const paramValue = this.paramValues[paramName];
-                const originalLine = paramName + ": " + JSON.stringify(paramValue);
-                const line = clippedString(originalLine, NewNode.NODE_WIDTH - 2 * NewNode.MARGIN, ctx);
-                ctx.fillText(
-                    line,
-                    NewNode.MARGIN,
-                    this.getInfoStartY() + i * NewNode.INFO_LINE_HEIGHT
-                );
-            }
-        }
-
-        computeSize(): [number, number] {
-            return [
-                NewNode.NODE_WIDTH,
-                this.getInfoStartY() + Math.max(0, (Object.keys(op.params || {}).length - 1) * NewNode.INFO_LINE_HEIGHT) + NewNode.MARGIN
-            ];
         }
 
         get help_url(): string {

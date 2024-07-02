@@ -1,4 +1,4 @@
-import type {OperatorDefinition, OperatorDefinitionSource, OperatorDefinitionParam} from "./workflowSchema";
+import type {OperatorDefinition, OperatorDefinitionSource} from "./workflowSchema";
 import {OperatorNodeInfo} from "../nodes/operatorNode";
 import ParamsEditor from "../ui/paramsEditor";
 import {DYNAMIC_OUTPUT_TYPE_MARKER} from "../constants";
@@ -40,12 +40,8 @@ export default class OperatorDefinitionWrapper {
         return this.data.properties.sources?.required?.includes(sourceName) ?? false;
     }
 
-    get params(): Record<string, OperatorDefinitionParam> | undefined {
-        return this.data.properties.params.properties;
-    }
-
-    isParamRequired(paramName: string): boolean {
-        return this.data.properties.params.required?.includes(paramName) ?? false;
+    get hasParams(): boolean {
+        return this.data.properties.params.properties !== undefined || this.data.properties.params.oneOf !== undefined;
     }
 
     showParamsEditor(currentNode: OperatorNodeInfo) {
