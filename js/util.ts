@@ -4,6 +4,7 @@ import {Backend} from "./backend";
 import {ValidationSummary} from "./ui/validationSummary";
 import {z} from "zod";
 import {ErrorMessageResponse} from "./schema/backendSchema";
+import {ELLIPSIS} from "./constants";
 
 export function getDefinitionName(ref: JsonSchemaRef) {
     return ref.$ref.substring(14);
@@ -99,10 +100,8 @@ export function binarySearch(max: number, getValueAt: (index: number) => number,
 }
 
 export function clippedString(str: string, maxWidth: number, ctx: CanvasRenderingContext2D): string {
-    const ellipsis = "…";
-
     const textWidth = ctx.measureText(str).width;
-    const ellipsisWidth = ctx.measureText(ellipsis).width;
+    const ellipsisWidth = ctx.measureText(ELLIPSIS).width;
 
     if (textWidth <= maxWidth || textWidth <= ellipsisWidth) {
         return str;
@@ -112,5 +111,5 @@ export function clippedString(str: string, maxWidth: number, ctx: CanvasRenderin
         guess => ctx.measureText(str.substring(0, guess)).width,
         maxWidth - ellipsisWidth
     );
-    return str.substring(0, index) + ellipsis;
+    return str.substring(0, index) + ELLIPSIS;
 }

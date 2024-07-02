@@ -12,6 +12,8 @@ export const PARAMS_EDITOR_ID = "workflow_editor-params";
 
 export const DYNAMIC_OUTPUT_TYPE_MARKER = "copyFromSource";
 
+export const ELLIPSIS = "…";
+
 export const LiteGraph_CONFIG_OVERRIDES = {
     release_link_on_empty_shows_menu: true,
     slot_types_default_in: {
