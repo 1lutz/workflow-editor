@@ -2,6 +2,8 @@ export const OPERATOR_CATEGORY = "geoengine";
 
 export const WORKFLOW_OUT_NODE_TYPE = OPERATOR_CATEGORY + "/workflowout";
 
+export const WORKFLOW_OUT_INPUT_NAME = "return";
+
 export const ARRAY_BUILDER_NODE_TYPE = OPERATOR_CATEGORY + "/arraybuilder";
 
 export const PREDEFINED_NODE_TYPES = [WORKFLOW_OUT_NODE_TYPE, ARRAY_BUILDER_NODE_TYPE];

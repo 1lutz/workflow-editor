@@ -18,6 +18,7 @@ import {Backend} from "./backend";
 import {createUI, type WidgetModel} from "./ui/ui";
 import OperatorDefinitionWrapper from "./schema/operatorDefinitionWrapper";
 import ArrayBuilderNode from "./nodes/arrayBuilderNode";
+import {importWorkflow} from "./ui/workflowImporter";
 
 function registerBackend(serverUrl: string, token: string, graph: LGraph) {
     const backend = new Backend(serverUrl, token);
@@ -46,6 +47,13 @@ async function registerDefinitions(backend: Backend) {
     }
 }
 
+function setupGraph(graph: LGraph, serverUrl: string, token: string, workflow?: Workflow) {
+    graph.clear();
+    const backend = registerBackend(serverUrl, token, graph);
+    const promise = registerDefinitions(backend);
+    promise.then(() => importWorkflow(graph, workflow));
+}
+
 export function render({model, el}: RenderContext<WidgetModel>) {
     const graph = createUI(model, el);
     graph.addOutput("Workflow Out", "raster,vector,plot", null);
@@ -56,9 +64,10 @@ export function render({model, el}: RenderContext<WidgetModel>) {
     const initalToken = model.get("token");
 
     if (initialServerUrl && initalToken) {
-        const backend = registerBackend(initialServerUrl, initalToken, graph);
-        registerDefinitions(backend);
+        const initialWorkflow = model.get("workflow");
+        setupGraph(graph, initialServerUrl, initalToken, initialWorkflow);
     }
+
     model.on("change:serverUrl", () => {
         // @ts-ignore
         const registeredOperators = LiteGraph.getNodeTypesInCategory(OPERATOR_CATEGORY);
@@ -77,14 +86,32 @@ export function render({model, el}: RenderContext<WidgetModel>) {
             // @ts-ignore
             LiteGraph.unregisterNodeType(registeredOperator);
         }
-        const serverUrl = model.get("serverUrl");
-        const token = model.get("token");
-        const backend = registerBackend(serverUrl, token, graph);
-        registerDefinitions(backend);
+        setupGraph(
+            graph,
+            model.get("serverUrl"),
+            model.get("token"),
+            model.get("workflow")
+        );
     });
+    model.on("change:token", () => {
+        registerBackend(
+            model.get("serverUrl"),
+            model.get("token"),
+            graph
+        );
+    })
+    model.on("change:workflow", () => {
+        if (graph.exportInProgress) return;
+        graph.clear();
+        importWorkflow(graph, model.get("workflow"));
+    })
 }
 
-export function renderPlainModel({model, el, onExport}: { model: WidgetModel, el: HTMLElement, onExport: (workflow: Workflow) => void }) {
+export function renderPlainModel({model, el, onExport}: {
+    model: WidgetModel,
+    el: HTMLElement,
+    onExport: (workflow?: Workflow) => void
+}) {
     const modelWrapper = {
         get<K extends keyof WidgetModel>(key: K): WidgetModel[K] {
             return model[key];

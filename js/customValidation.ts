@@ -77,7 +77,7 @@ function validateNeighborhoodAggregate(instance: WorkflowOperator) {
 }
 
 async function validateColumnRangeFilter(instance: WorkflowOperator, backend: Backend, node: LGraphNode) {
-    const workflow = buildWorkflowFromInput(node, 0);
+    const workflow = buildWorkflowFromInput(node, 0)!;
     const workflowMetadata = await backend.getWorkflowMetadata(workflow);
 
     const expectedName: string = instance.params.column;
