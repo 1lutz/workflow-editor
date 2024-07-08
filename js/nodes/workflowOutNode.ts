@@ -13,7 +13,7 @@ export default class WorkflowOutNode extends LGraphNode {
     onExecute() {
         const workflow = buildWorkflowFromInput(this, 0);
 
-        if (workflow.operator) {
+        if (workflow) {
             this.graph?.setOutputData(WorkflowOutNode.title, workflow);
             this.has_errors = false;
         } else {
@@ -21,7 +21,12 @@ export default class WorkflowOutNode extends LGraphNode {
 
             if (this.graph) {
                 this.graph.setOutputData(WorkflowOutNode.title, null);
-                getValidationSummary(this.graph).addError(WorkflowOutNode.title, "Der Eingabedatensatz fehlt. Verbinde diesen Operator mit einem anderen Operator, zum Beispiel \"GdalSource\".");
+                const validationSummary = getValidationSummary(this.graph);
+
+                if (this.isInputConnected(0))
+                    validationSummary.addError(WorkflowOutNode.title, "Es ist kein Datensatz angekommen. Prüfe, ob bei dem angeschlossenen Operator Fehler vorliegen.");
+                else
+                    validationSummary.addError(WorkflowOutNode.title, "Es ist kein Datensatz angekommen. Verbinde diesen Operator mit einem anderen Operator, zum Beispiel \"GdalSource\".");
             }
         }
     }

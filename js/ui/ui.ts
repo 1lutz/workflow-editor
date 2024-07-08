@@ -42,14 +42,9 @@ function createGraph(domCanvas: HTMLCanvasElement) {
     return graph;
 }
 
-function createExportButton(graph: LGraph, model: AnyModel<WidgetModel>) {
-    let domButton = document.createElement("button");
-    domButton.classList.add("workflow_editor-export", "btn", "btn-outline-primary", "btn-sm");
-    domButton.innerText = "Export";
-    domButton.addEventListener("click", async () => {
-        domButton.setAttribute("disabled", "disabled");
-        domButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="visually-hidden">Exporting...</span>';
-
+function registerExporter(graph: LGraph, model: AnyModel<WidgetModel>) {
+    async function doExportAsyncInternal() {
+        console.log("Starting export ...");
         graph.setOutputData(WorkflowOutNode.title, null);
         await graph.runStepAsync();
         graph.setDirtyCanvas(true, false);
@@ -66,23 +61,30 @@ function createExportButton(graph: LGraph, model: AnyModel<WidgetModel>) {
             validationSummary.addError("Allgemein", `Damit das Ergebnis eindeutig ist, darf es nur einen Ausgabeblock geben. Lösche überschüssige ${WorkflowOutNode.title}-Block.`);
         }
         validationSummary.render();
-
-        domButton.innerText = "Export";
-        domButton.removeAttribute("disabled");
-    });
-    return domButton;
+        console.log("Export finished!");
+    }
+    graph.doExportAsync = async () => {
+        if (!graph.isExporting) {
+            graph.isExporting = true;
+            await doExportAsyncInternal();
+            graph.isExporting = false;
+        }
+    };
+    graph.onNodeConnectionChange = graph.doExportAsync;
 }
 
 export function createUI(model: AnyModel<WidgetModel>, el: HTMLElement) {
     const domCanvas = createCanvas();
     el.appendChild(createContainer(domCanvas));
     const graph = createGraph(domCanvas);
-    el.appendChild(createExportButton(graph, model));
+    registerExporter(graph, model);
 
     const validationSummary = new ValidationSummary();
     // @ts-ignore
     graph.validationSummary = validationSummary;
     el.appendChild(validationSummary.createContainer());
+
+    graph.doExportAsync(); // show initial WorkflowOut validation
 
     return graph;
 }

@@ -60,6 +60,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             this._paramValues = newValue;
             this._paramsWidget!.value = newValue;
             this.setSize(this.computeSize());
+            this.graph?.doExportAsync();
             //this.setDirtyCanvas(false, true);
         }
 
