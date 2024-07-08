@@ -83,7 +83,7 @@ export type WorkflowSchema = z.infer<typeof WorkflowSchema>;
 export type WorkflowOperator = {
     type: string,
     params: Record<string, any>,
-    sources?: Record<string, any>
+    sources?: Record<string, WorkflowOperator>
 }
 
 export type Workflow = {

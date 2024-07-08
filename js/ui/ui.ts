@@ -64,11 +64,12 @@ function registerExporter(graph: LGraph, model: AnyModel<WidgetModel>) {
         console.log("Export finished!");
     }
     graph.doExportAsync = async () => {
-        if (!graph.isExporting) {
-            graph.isExporting = true;
-            await doExportAsyncInternal();
-            graph.isExporting = false;
+        if (graph.exportInProgress) {
+            return;
         }
+        graph.exportInProgress = true;
+        await doExportAsyncInternal();
+        graph.exportInProgress = false;
     };
     graph.onNodeConnectionChange = graph.doExportAsync;
 }
@@ -83,8 +84,6 @@ export function createUI(model: AnyModel<WidgetModel>, el: HTMLElement) {
     // @ts-ignore
     graph.validationSummary = validationSummary;
     el.appendChild(validationSummary.createContainer());
-
-    graph.doExportAsync(); // show initial WorkflowOut validation
 
     return graph;
 }

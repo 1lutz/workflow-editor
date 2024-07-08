@@ -57,6 +57,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
         }
 
         set paramValues(newValue) {
+            if (!op.hasParams) return;
             this._paramValues = newValue;
             this._paramsWidget!.value = newValue;
             this.setSize(this.computeSize());

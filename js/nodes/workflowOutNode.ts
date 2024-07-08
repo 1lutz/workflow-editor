@@ -1,5 +1,6 @@
 import {LGraphNode} from "litegraph.js";
 import {buildWorkflowFromInput, getValidationSummary} from "../util";
+import {WORKFLOW_OUT_INPUT_NAME} from "../constants";
 
 export default class WorkflowOutNode extends LGraphNode {
     static title = "Workflow Out";
@@ -7,7 +8,7 @@ export default class WorkflowOutNode extends LGraphNode {
 
     constructor() {
         super(WorkflowOutNode.title);
-        this.addInput("return", "raster,vector,plot");
+        this.addInput(WORKFLOW_OUT_INPUT_NAME, "raster,vector,plot");
     }
 
     onExecute() {
