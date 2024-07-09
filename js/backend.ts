@@ -6,7 +6,8 @@ import {
     RegisterWorkflowResponse,
     WorkflowMetadataResponse,
     ListProjectsResponse,
-    LoadProjectResponse
+    LoadProjectResponse,
+    AnyResponse
 } from "./schema/backendSchema";
 
 export class Backend {
@@ -66,20 +67,11 @@ export class Backend {
         }, LoadProjectResponse);
     }
 
-    async loadWorkflow(workflowId: string): Promise<Workflow> {
-        const res = await fetch(this.serverUrl + "/workflow/" + encodeURIComponent(workflowId), {
+    loadWorkflow(workflowId: string): Promise<Workflow> {
+        return fetchAndParse(this.serverUrl + "/workflow/" + encodeURIComponent(workflowId), {
             headers: {
                 Authorization: "Bearer " + this.token
             }
-        });
-        const json = await res.json();
-
-        if ("error" in json) {
-            throw new Error(json.message);
-        }
-        if (!res.ok) {
-            throw new Error("HTTP error: " + res.status + " " + res.statusText);
-        }
-        return json;
+        }, AnyResponse);
     }
 }
