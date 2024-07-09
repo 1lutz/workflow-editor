@@ -45,3 +45,5 @@ export const LoadProjectResponse = z.object({
 });
 
 export type LoadProjectResponse = z.infer<typeof LoadProjectResponse>;
+
+export const AnyResponse = z.any();

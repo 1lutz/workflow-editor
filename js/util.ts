@@ -10,28 +10,6 @@ export function getDefinitionName(ref: JsonSchemaRef) {
     return ref.$ref.substring(14);
 }
 
-export function checkedJsonFetch(url: string, init?: RequestInit) {
-    return fetch(url, init)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error("HTTP error: " + res.status + " " + res.statusText);
-            }
-            return res.json();
-        });
-}
-
-const cachedJsonFiles: { [url: string]: Promise<any> } = {};
-
-export function checkedJsonFetchWithCache(url: string) {
-    let file = cachedJsonFiles[url];
-
-    if (!file) {
-        file = checkedJsonFetch(url);
-        cachedJsonFiles[url] = file;
-    }
-    return file;
-}
-
 export async function fetchAndParse<T extends z.ZodTypeAny>(input: URL | RequestInfo, init: RequestInit | undefined, schema: T) {
     const res = await fetch(input, init);
     const schemaWithErr = z.union([schema, ErrorMessageResponse]);
@@ -44,6 +22,18 @@ export async function fetchAndParse<T extends z.ZodTypeAny>(input: URL | Request
         throw new Error("HTTP error: " + res.status + " " + res.statusText);
     }
     return json as z.infer<T>;
+}
+
+const cachedJsonFiles = new Map<URL | RequestInfo, Promise<any>>();
+
+export async function fetchAndParseWithCache<T extends z.ZodTypeAny>(input: URL | RequestInfo, init: RequestInit | undefined, schema: T) {
+    let file = cachedJsonFiles.get(input);
+
+    if (!file) {
+        file = fetchAndParse(input, init, schema);
+        cachedJsonFiles.set(input, file);
+    }
+    return file as Promise<z.infer<T>>;
 }
 
 export function getBackend(graph: LGraph): Backend {
