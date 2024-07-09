@@ -28,3 +28,20 @@ export const WorkflowMetadataResponse = z.object({
 });
 
 export type WorkflowMetadataResponse = z.infer<typeof WorkflowMetadataResponse>;
+
+export const ListProjectsResponse = z.array(z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    layerNames: z.array(z.string())
+}));
+
+export type ListProjectsResponse = z.infer<typeof ListProjectsResponse>;
+
+export const LoadProjectResponse = z.object({
+    layers: z.array(z.object({
+        name: z.string(),
+        workflow: z.string().uuid()
+    }))
+});
+
+export type LoadProjectResponse = z.infer<typeof LoadProjectResponse>;

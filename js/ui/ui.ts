@@ -1,11 +1,20 @@
-import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
+import {
+    ContextMenu,
+    ContextMenuEventListener,
+    ContextMenuItem,
+    IContextMenuOptions,
+    LGraph,
+    LGraphCanvas,
+    LiteGraph
+} from "litegraph.js";
 import {AnyModel} from "@anywidget/types";
 import WorkflowOutNode from "../nodes/workflowOutNode";
 import {LGraphCanvas_CONFIG_OVERRIDES, LiteGraph_CONFIG_OVERRIDES, WORKFLOW_OUT_NODE_TYPE} from "../constants";
-import {getValidationSummary} from "../util";
+import {getBackend, getValidationSummary} from "../util";
 import applyAllBugfixes from "../bugfixes";
 import {Workflow} from "../schema/workflowSchema";
 import {ValidationSummary} from "./validationSummary";
+import {importWorkflow} from "./workflowImporter";
 
 /* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
 export interface WidgetModel {
@@ -43,7 +52,7 @@ function createGraph(domCanvas: HTMLCanvasElement) {
 }
 
 function registerExporter(graph: LGraph, model: AnyModel<WidgetModel>) {
-    async function doExportAsyncInternal() {
+    async function doExportInternal() {
         console.log("Starting export ...");
         graph.setOutputData(WorkflowOutNode.title, null);
         await graph.runStepAsync();
@@ -63,15 +72,59 @@ function registerExporter(graph: LGraph, model: AnyModel<WidgetModel>) {
         validationSummary.render();
         console.log("Export finished!");
     }
-    graph.doExportAsync = async () => {
-        if (graph.exportInProgress) {
+
+    graph.doExport = async () => {
+        if (graph.isExportInProgress) {
             return;
         }
-        graph.exportInProgress = true;
-        await doExportAsyncInternal();
-        graph.exportInProgress = false;
+        graph.isExportInProgress = true;
+        await doExportInternal();
+        graph.isExportInProgress = false;
     };
-    graph.onNodeConnectionChange = graph.doExportAsync;
+    graph.onNodeConnectionChange = graph.doExport;
+}
+
+function getCanvasExtraMenuOptions(canvas: LGraphCanvas): ContextMenuItem[] {
+    return [
+        {
+            content: "Import workflow as template",
+            has_submenu: true,
+            callback: function (_node: ContextMenuItem, _options: IContextMenuOptions, e: MouseEvent, prev_menu: ContextMenu | undefined) {
+                const ref_window = canvas.getCanvasWindow();
+                const backend = getBackend(canvas.graph);
+                const templateContextMenu = new LiteGraph.ContextMenu([{
+                    content: "With workflow id",
+                    has_submenu: false,
+                    callback: function () {
+                        canvas.prompt("Workflow id", "", async (workflowId: string) => {
+                            const workflow = await backend.loadWorkflow(workflowId);
+                            importWorkflow(canvas.graph, workflow, false);
+                        }, e);
+                    }
+                }], {event: e, parentMenu: prev_menu}, ref_window);
+                backend.listProjects().then(projects => {
+                    projects
+                        .filter(projectOverview => projectOverview.layerNames.length > 0)
+                        .forEach(projectOverview => {
+                            templateContextMenu.addItem("From project " + projectOverview.name, {
+                                content: "<Not displayed>",
+                                submenu: {
+                                    options: projectOverview.layerNames.map(layerName => ({
+                                        content: `From layer ${projectOverview.name}/${layerName}`,
+                                        has_submenu: false,
+                                        callback: async function () {
+                                            const project = await backend.loadProject(projectOverview.id);
+                                            const workflowId = project.layers.find(layer => layer.name === layerName)!.workflow;
+                                            const workflow = await backend.loadWorkflow(workflowId);
+                                            importWorkflow(canvas.graph, workflow, false);
+                                        } as unknown as ContextMenuEventListener
+                                    }))
+                                }
+                            })
+                        });
+                });
+            }
+        }];
 }
 
 export function createUI(model: AnyModel<WidgetModel>, el: HTMLElement) {
@@ -79,6 +132,8 @@ export function createUI(model: AnyModel<WidgetModel>, el: HTMLElement) {
     el.appendChild(createContainer(domCanvas));
     const graph = createGraph(domCanvas);
     registerExporter(graph, model);
+    // @ts-ignore
+    graph.list_of_graphcanvas[0].getExtraMenuOptions = getCanvasExtraMenuOptions;
 
     const validationSummary = new ValidationSummary();
     // @ts-ignore
