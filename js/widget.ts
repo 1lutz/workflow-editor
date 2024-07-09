@@ -50,7 +50,7 @@ async function registerDefinitions(backend: Backend) {
 async function setupGraph(graph: LGraph, serverUrl: string, token: string, workflow?: Workflow) {
     const backend = registerBackend(serverUrl, token, graph);
     await registerDefinitions(backend);
-    await importWorkflow(graph, workflow, true);
+    await importWorkflow(graph, workflow);
 }
 
 export function render({model, el}: RenderContext<WidgetModel>) {
@@ -101,7 +101,7 @@ export function render({model, el}: RenderContext<WidgetModel>) {
     })
     model.on("change:workflow", () => {
         if (graph.isExportInProgress) return;
-        importWorkflow(graph, model.get("workflow"), true);
+        importWorkflow(graph, model.get("workflow"));
     })
 }
 
