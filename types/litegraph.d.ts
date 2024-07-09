@@ -30,8 +30,8 @@ declare module "litegraph.js" {
         addOutput(name: string, type: string | -1 | 0, value: any): void;
         setOutputData(name: string, value: any): void;
         runStepAsync(): Promise<void>;
-        doExportAsync(): Promise<void>;
-        exportInProgress?: boolean;
+        doExport(): Promise<void>;
+        isExportInProgress?: boolean;
         onNodeConnectionChange(pinType: number, node: LGraphNode, slot: number): void;
     }
 }

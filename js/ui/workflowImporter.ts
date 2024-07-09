@@ -4,36 +4,44 @@ import {layout, graphlib} from "@dagrejs/dagre";
 import {OPERATOR_CATEGORY, WORKFLOW_OUT_INPUT_NAME, WORKFLOW_OUT_NODE_TYPE} from "../constants";
 import {OperatorNodeInfo} from "../nodes/operatorNode";
 
-export function importWorkflow(litegraph: LGraph, workflow?: Workflow) {
+export function importWorkflow(litegraph: LGraph, workflow: Workflow | undefined, standalone: boolean) {
     console.log("Importing workflow:", workflow);
-    if (!workflow) {
-        litegraph.doExportAsync(); // show initial WorkflowOut validation
-        return;
+    if (standalone) {
+        litegraph.clear();
     }
-    litegraph.exportInProgress = true; // block validation on every params set
+    if (!workflow) {
+        return litegraph.doExport(); // show initial WorkflowOut validation
+    }
+    litegraph.isExportInProgress = true; // block validation on every params set
 
-    const outNode = LiteGraph.createNode(WORKFLOW_OUT_NODE_TYPE);
-    litegraph.add(outNode, true);
     const g = new graphlib.Graph();
     g.setGraph({
         rankdir: "LR"
     });
-    g.setDefaultEdgeLabel(function() { return {}; });
-    g.setNode(String(outNode.id), {
-        width: outNode.size[0],
-        height: outNode.size[1] + LiteGraph.NODE_TITLE_HEIGHT
+    g.setDefaultEdgeLabel(function () {
+        return {};
     });
+    let outNode: LGraphNode | undefined;
+
+    if (standalone) {
+        outNode = LiteGraph.createNode(WORKFLOW_OUT_NODE_TYPE);
+        litegraph.add(outNode, true);
+        g.setNode(String(outNode.id), {
+            width: outNode.size[0],
+            height: outNode.size[1] + LiteGraph.NODE_TITLE_HEIGHT
+        });
+    }
     addOperator(litegraph, g, workflow.operator, outNode, WORKFLOW_OUT_INPUT_NAME);
 
     layout(g);
     applyPositions(litegraph, g);
 
     litegraph.updateExecutionOrder();
-    litegraph.exportInProgress = false;
-    litegraph.doExportAsync();
+    litegraph.isExportInProgress = false;
+    return litegraph.doExport();
 }
 
-function addOperator(litegraph: LGraph, g: graphlib.Graph, operator: WorkflowOperator, parentNode: LGraphNode, sourceName: string) {
+function addOperator(litegraph: LGraph, g: graphlib.Graph, operator: WorkflowOperator, parentNode: LGraphNode | undefined, sourceName: string) {
     //create node
     const newNode = LiteGraph.createNode(OPERATOR_CATEGORY + "/" + operator.type);
     litegraph.add(newNode, true);
@@ -44,8 +52,10 @@ function addOperator(litegraph: LGraph, g: graphlib.Graph, operator: WorkflowOpe
     });
     (newNode as unknown as OperatorNodeInfo).paramValues = operator.params;
     //connect output to parent
-    newNode.connect(0, parentNode, sourceName);
-    g.setEdge(newNodeId, String(parentNode.id));
+    if (parentNode) {
+        newNode.connect(0, parentNode, sourceName);
+        g.setEdge(newNodeId, String(parentNode.id));
+    }
     // create and connect sources
     if (!operator.sources) return;
 

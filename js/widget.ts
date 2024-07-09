@@ -47,11 +47,10 @@ async function registerDefinitions(backend: Backend) {
     }
 }
 
-function setupGraph(graph: LGraph, serverUrl: string, token: string, workflow?: Workflow) {
-    graph.clear();
+async function setupGraph(graph: LGraph, serverUrl: string, token: string, workflow?: Workflow) {
     const backend = registerBackend(serverUrl, token, graph);
-    const promise = registerDefinitions(backend);
-    promise.then(() => importWorkflow(graph, workflow));
+    await registerDefinitions(backend);
+    await importWorkflow(graph, workflow, true);
 }
 
 export function render({model, el}: RenderContext<WidgetModel>) {
@@ -101,9 +100,8 @@ export function render({model, el}: RenderContext<WidgetModel>) {
         );
     })
     model.on("change:workflow", () => {
-        if (graph.exportInProgress) return;
-        graph.clear();
-        importWorkflow(graph, model.get("workflow"));
+        if (graph.isExportInProgress) return;
+        importWorkflow(graph, model.get("workflow"), true);
     })
 }
 
