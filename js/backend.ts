@@ -6,8 +6,7 @@ import {
     IdResponse,
     TypedResultDescriptor,
     ListProjectsResponse,
-    LoadProjectResponse,
-    AnyResponse
+    LoadProjectResponse
 } from "./schema/backendSchema";
 
 export class Backend {
@@ -84,7 +83,7 @@ export class Backend {
             headers: {
                 Authorization: "Bearer " + this.token
             }
-        }, AnyResponse);
+        }, Workflow);
     }
 
     async createProject(create: CreateProjectInput): Promise<string> {
