@@ -1,10 +1,10 @@
 import {fetchAndParse} from "./util";
 import {Workflow, WorkflowSchema} from "./schema/workflowSchema";
-import type {ResultType} from "./schema/backendSchema";
+import {CreateProjectInput, NoContentResponse, ResultType, UpdateProjectInput} from "./schema/backendSchema";
 import {
     GetDatasetResponse,
-    RegisterWorkflowResponse,
-    WorkflowMetadataResponse,
+    IdResponse,
+    TypedResultDescriptor,
     ListProjectsResponse,
     LoadProjectResponse,
     AnyResponse
@@ -32,23 +32,29 @@ export class Backend {
         return json.resultDescriptor.type;
     }
 
-    async getWorkflowMetadata(workflow: Workflow): Promise<WorkflowMetadataResponse> {
-        // TODO add POST /workflow/validate backend API
-        let registerJson = await fetchAndParse(this.serverUrl + "/workflow", {
+    async registerWorkflow(workflow: Workflow): Promise<string> {
+        const json = await fetchAndParse(this.serverUrl + "/workflow", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 Authorization: "Bearer " + this.token
             },
             body: JSON.stringify(workflow)
-        }, RegisterWorkflowResponse);
-        const workflowId = registerJson.id;
+        }, IdResponse);
+        return json.id;
+    }
+
+    async getWorkflowMetadata(workflowOrId: Workflow | string): Promise<TypedResultDescriptor> {
+        // TODO add POST /workflow/validate backend API
+        const workflowId = typeof workflowOrId === "string"
+            ? workflowOrId
+            : await this.registerWorkflow(workflowOrId);
 
         return await fetchAndParse(this.serverUrl + "/workflow/" + workflowId + "/metadata", {
             headers: {
                 Authorization: "Bearer " + this.token
             }
-        }, WorkflowMetadataResponse);
+        }, TypedResultDescriptor);
     }
 
     listProjects(): Promise<ListProjectsResponse> {
@@ -59,12 +65,18 @@ export class Backend {
         }, ListProjectsResponse);
     }
 
-    loadProject(projectId: string): Promise<LoadProjectResponse> {
+    loadProjectById(projectId: string): Promise<LoadProjectResponse> {
         return fetchAndParse(this.serverUrl + "/project/" + encodeURIComponent(projectId), {
             headers: {
                 Authorization: "Bearer " + this.token
             }
         }, LoadProjectResponse);
+    }
+
+    async findProjectByName(projectName: string): Promise<string | undefined> {
+        // TODO what if project is not in list but exists?
+        const foundProjects = await this.listProjects();
+        return foundProjects.find(project => project.name === projectName)?.id;
     }
 
     loadWorkflow(workflowId: string): Promise<Workflow> {
@@ -73,5 +85,28 @@ export class Backend {
                 Authorization: "Bearer " + this.token
             }
         }, AnyResponse);
+    }
+
+    async createProject(create: CreateProjectInput): Promise<string> {
+        const json = await fetchAndParse(this.serverUrl + "/project", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + this.token
+            },
+            body: JSON.stringify(create)
+        }, IdResponse);
+        return json.id;
+    }
+
+    updateProject(update: UpdateProjectInput): Promise<void> {
+        return fetchAndParse(this.serverUrl + "/project/" + encodeURIComponent(update.id), {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + this.token
+            },
+            body: JSON.stringify(update)
+        }, NoContentResponse);
     }
 }

@@ -1,5 +1,5 @@
 import {
-    ContextMenuItem,
+    ContextMenuItem, IContextMenuOptions,
     INodeInputSlot,
     INodeOutputSlot,
     INodeSlot,
@@ -7,8 +7,14 @@ import {
     LiteGraph,
     Vector2
 } from "litegraph.js";
-import {OPERATOR_CATEGORY} from "../constants";
-import {getBackend, getValidationSummary, isEmpty} from "../util";
+import {MY_TEMPLATES_DIRECTORY, OPERATOR_CATEGORY, WGS_84, WGS_84_EXTENT} from "../constants";
+import {
+    buildDefaultSymbologyForWorkflow,
+    buildWorkflowFromOutput,
+    getBackend,
+    getValidationSummary,
+    isEmpty, simpleErrorHandler
+} from "../util";
 import type {WorkflowOperator} from "../schema/workflowSchema";
 import {isSourceArray} from "../typeguards";
 import OperatorDefinitionWrapper from "../schema/operatorDefinitionWrapper";
@@ -163,6 +169,60 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
                     content: "Operator Help",
                     callback: function () {
                         openInNewTab(op.help_url!);
+                    }
+                });
+            }
+            const outputWorkflow = buildWorkflowFromOutput(this);
+            const canvas = this.graph?.list_of_graphcanvas[0];
+
+            if (outputWorkflow && canvas) {
+                const backend = getBackend(this.graph!);
+                extras.push({
+                    content: "Export as template",
+                    callback: function (_node: ContextMenuItem, _options: IContextMenuOptions, e: MouseEvent) {
+                        canvas.prompt("Template Name", "", async (templateName: string) => {
+                            try {
+                                const workflowId = await backend.registerWorkflow(outputWorkflow);
+                                const symbology = await buildDefaultSymbologyForWorkflow(outputWorkflow, workflowId, backend); // fail fast
+                                let templatesProjectId = await backend.findProjectByName(MY_TEMPLATES_DIRECTORY);
+
+                                if (!templatesProjectId) {
+                                    templatesProjectId = await backend.createProject({
+                                        name: MY_TEMPLATES_DIRECTORY,
+                                        description: "My exported templates",
+                                        bounds: {
+                                            spatialReference: WGS_84,
+                                            boundingBox: WGS_84_EXTENT,
+                                            timeInterval: {
+                                                start: '2014-04-01T12:00:00.000Z',
+                                                end: '2014-04-01T12:00:00.000Z'
+                                            }
+                                        },
+                                        timeStep: {
+                                            step: 1,
+                                            granularity: "months"
+                                        }
+                                    });
+                                }
+                                await backend.updateProject({
+                                    id: templatesProjectId,
+                                    layers: [
+                                        {
+                                            workflow: workflowId,
+                                            name: templateName,
+                                            visibility: {
+                                                data: true,
+                                                legend: false
+                                            },
+                                            symbology
+                                        }
+                                    ]
+                                });
+                                alert(`Successfully exported to "${MY_TEMPLATES_DIRECTORY}/${templateName}"`);
+                            } catch (err) {
+                                simpleErrorHandler("save template", err);
+                            }
+                        }, e);
                     }
                 });
             }

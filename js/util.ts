@@ -3,8 +3,8 @@ import {LGraph, LGraphNode} from "litegraph.js";
 import {Backend} from "./backend";
 import {ValidationSummary} from "./ui/validationSummary";
 import {z} from "zod";
-import {ErrorMessageResponse} from "./schema/backendSchema";
-import {ELLIPSIS} from "./constants";
+import {ErrorMessageResponse, Symbology} from "./schema/backendSchema";
+import {ELLIPSIS, RANDOM_COLOR_DICT} from "./constants";
 
 export function getDefinitionName(ref: JsonSchemaRef) {
     return ref.$ref.substring(14);
@@ -13,15 +13,16 @@ export function getDefinitionName(ref: JsonSchemaRef) {
 export async function fetchAndParse<T extends z.ZodTypeAny>(input: URL | RequestInfo, init: RequestInit | undefined, schema: T) {
     const res = await fetch(input, init);
     const schemaWithErr = z.union([schema, ErrorMessageResponse]);
-    const json = await schemaWithErr.parseAsync(await res.json());
+    const json = res.headers.get("content-length") === "0" ? undefined : await res.json();
+    const parsed = await schemaWithErr.parseAsync(json);
 
-    if ("error" in json) {
+    if (parsed !== undefined && "error" in parsed) {
         throw new Error(json.message);
     }
     if (!res.ok) {
         throw new Error("HTTP error: " + res.status + " " + res.statusText);
     }
-    return json as z.infer<T>;
+    return parsed as z.infer<T>;
 }
 
 const cachedJsonFiles = new Map<URL | RequestInfo, Promise<any>>();
@@ -69,7 +70,17 @@ export function buildWorkflowFromInput(node: LGraphNode, slot: number): Workflow
     if (!data) return null;
 
     return {
-        type: uppercaseFirstLetter(node.getInputDataType(slot)),
+        type: uppercaseFirstLetter(node.getInputDataType(slot)) as any,
+        operator: data
+    };
+}
+
+export function buildWorkflowFromOutput(node: LGraphNode): Workflow | null {
+    const data = node.getOutputData(0);
+    if (!data) return null;
+
+    return {
+        type: uppercaseFirstLetter(node.getOutputInfo(0)!.type) as any,
         operator: data
     };
 }
@@ -105,4 +116,91 @@ export function clippedString(str: string, maxWidth: number, ctx: CanvasRenderin
         maxWidth - ellipsisWidth
     );
     return str.substring(0, index) + ELLIPSIS;
+}
+
+export async function buildDefaultSymbologyForWorkflow(workflow: Workflow, workflowId: string, backend: Backend): Promise<Symbology> {
+    if (workflow.type === "Raster") {
+        return {
+            type: 'raster',
+            opacity: 1.0,
+            rasterColorizer: {
+                type: 'singleBand',
+                band: 0,
+                bandColorizer: {
+                    type: 'linearGradient',
+                    breakpoints: [
+                        {value: 1, color: [0, 0, 0, 255]},
+                        {value: 255, color: [255, 255, 255, 255]},
+                    ],
+                    overColor: [255, 255, 255, 127],
+                    underColor: [0, 0, 0, 127],
+                    noDataColor: [0, 0, 0, 0],
+                },
+            },
+        };
+    }
+    const resultDescriptor = await backend.getWorkflowMetadata(workflowId);
+    if (resultDescriptor.type !== "vector") throw new Error("Unsupported workflow type");
+
+    switch (resultDescriptor.dataType) {
+        case "MultiPoint":
+            return {
+                type: 'point',
+                radius: {
+                    type: 'static',
+                    value: 10
+                },
+                stroke: {
+                    width: {
+                        type: 'static',
+                        value: 1
+                    },
+                    color: {
+                        type: 'static',
+                        color: [0, 0, 0, 255]
+                    }
+                },
+                fillColor: {
+                    type: 'static',
+                    color: RANDOM_COLOR_DICT
+                }
+            };
+        case "MultiLineString":
+            return {
+                type: 'line',
+                stroke: {
+                    width: {type: 'static', value: 1},
+                    color: {
+                        type: 'static',
+                        color: RANDOM_COLOR_DICT
+                    }
+                },
+                autoSimplified: true
+            };
+        case "MultiPolygon":
+            return {
+                type: 'polygon',
+                stroke: {
+                    width: {
+                        type: 'static',
+                        value: 1
+                    },
+                    color: {
+                        type: 'static',
+                        color: [0, 0, 0, 255]
+                    }
+                },
+                fillColor: {
+                    type: 'static',
+                    color: RANDOM_COLOR_DICT
+                },
+                autoSimplified: true
+            };
+        default:
+            throw new Error('unknown symbology type');
+    }
+}
+
+export function simpleErrorHandler(actionDescription: string, error: any) {
+    alert("Failed to " + actionDescription + ": " + error.message);
 }

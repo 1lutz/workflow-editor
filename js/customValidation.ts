@@ -81,6 +81,7 @@ async function validateColumnRangeFilter(instance: WorkflowOperator, backend: Ba
     const workflowMetadata = await backend.getWorkflowMetadata(workflow);
 
     const expectedName: string = instance.params.column;
+    // @ts-ignore
     const foundColumnMeta = workflowMetadata.columns[expectedName];
 
     if (!foundColumnMeta) {

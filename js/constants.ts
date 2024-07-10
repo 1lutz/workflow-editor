@@ -16,6 +16,23 @@ export const DYNAMIC_OUTPUT_TYPE_MARKER = "copyFromSource";
 
 export const ELLIPSIS = "…";
 
+export const MY_TEMPLATES_DIRECTORY = "My Templates";
+
+export const WGS_84 = "EPSG:4326";
+
+export const WGS_84_EXTENT = {
+    lowerLeftCoordinate: {
+        x: -180.0,
+        y: -90.0
+    },
+    upperRightCoordinate: {
+        x: 180.0,
+        y: 90.0
+    }
+};
+
+export const RANDOM_COLOR_DICT = [51, 160, 44, 255]; // #33a02c / green
+
 export const LiteGraph_CONFIG_OVERRIDES = {
     release_link_on_empty_shows_menu: true,
     slot_types_default_in: {
