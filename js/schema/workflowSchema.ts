@@ -88,6 +88,6 @@ export type WorkflowOperator = {
 }
 
 export type Workflow = {
-    type: string,
+    type: "Vector" | "Raster" | "Plot",
     operator: WorkflowOperator
 }

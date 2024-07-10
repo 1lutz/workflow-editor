@@ -3,46 +3,52 @@ import type {Workflow, WorkflowOperator} from "../schema/workflowSchema";
 import {layout, graphlib} from "@dagrejs/dagre";
 import {OPERATOR_CATEGORY, WORKFLOW_OUT_INPUT_NAME, WORKFLOW_OUT_NODE_TYPE} from "../constants";
 import {OperatorNodeInfo} from "../nodes/operatorNode";
+import {simpleErrorHandler} from "../util";
 
-export function importWorkflow(litegraph: LGraph, workflow: Workflow | undefined, templateName?: string) {
+export async function importWorkflow(litegraph: LGraph, workflow: Workflow | undefined, templateName?: string) {
     console.log("Importing workflow:", workflow);
     if (!templateName) {
         litegraph.clear();
     }
     if (!workflow) {
-        return litegraph.doExport(); // show initial WorkflowOut validation
+        await litegraph.doExport(); // show initial WorkflowOut validation
+        return;
     }
-    litegraph.isExportInProgress = true; // block validation on every params set
+    try {
+        litegraph.isExportInProgress = true; // block validation on every params set
 
-    const g = new graphlib.Graph();
-    g.setGraph({
-        rankdir: "LR"
-    });
-    g.setDefaultEdgeLabel(function () {
-        return {};
-    });
-    let outNode: LGraphNode | undefined;
-
-    if (!templateName) {
-        outNode = LiteGraph.createNode(WORKFLOW_OUT_NODE_TYPE);
-        litegraph.add(outNode, true);
-        g.setNode(String(outNode.id), {
-            width: outNode.size[0],
-            height: outNode.size[1] + LiteGraph.NODE_TITLE_HEIGHT
+        const g = new graphlib.Graph();
+        g.setGraph({
+            rankdir: "LR"
         });
+        g.setDefaultEdgeLabel(function () {
+            return {};
+        });
+        let outNode: LGraphNode | undefined;
+
+        if (!templateName) {
+            outNode = LiteGraph.createNode(WORKFLOW_OUT_NODE_TYPE);
+            litegraph.add(outNode, true);
+            g.setNode(String(outNode.id), {
+                width: outNode.size[0],
+                height: outNode.size[1] + LiteGraph.NODE_TITLE_HEIGHT
+            });
+        }
+        addOperator(litegraph, g, workflow.operator, outNode, WORKFLOW_OUT_INPUT_NAME);
+
+        layout(g);
+        applyPositions(litegraph, g);
+
+        if (templateName) {
+            createGroup(litegraph, g, templateName);
+        }
+    } catch (err) {
+        simpleErrorHandler("import workflow", err);
+    } finally {
+        litegraph.updateExecutionOrder();
+        litegraph.isExportInProgress = false;
+        await litegraph.doExport();
     }
-    addOperator(litegraph, g, workflow.operator, outNode, WORKFLOW_OUT_INPUT_NAME);
-
-    layout(g);
-    applyPositions(litegraph, g);
-
-    if (templateName) {
-        createGroup(litegraph, g, templateName);
-    }
-
-    litegraph.updateExecutionOrder();
-    litegraph.isExportInProgress = false;
-    return litegraph.doExport();
 }
 
 function addOperator(litegraph: LGraph, g: graphlib.Graph, operator: WorkflowOperator, parentNode: LGraphNode | undefined, sourceName: string) {

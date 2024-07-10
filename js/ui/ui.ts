@@ -98,7 +98,7 @@ function getCanvasExtraMenuOptions(canvas: LGraphCanvas): ContextMenuItem[] {
                     callback: function () {
                         canvas.prompt("Workflow id", "", async (workflowId: string) => {
                             const workflow = await backend.loadWorkflow(workflowId);
-                            importWorkflow(canvas.graph, workflow, "Template");
+                            await importWorkflow(canvas.graph, workflow, "Template");
                         }, e);
                     }
                 }], {event: e, parentMenu: prev_menu}, ref_window);
@@ -113,10 +113,10 @@ function getCanvasExtraMenuOptions(canvas: LGraphCanvas): ContextMenuItem[] {
                                         content: `From layer ${projectOverview.name}/${layerName}`,
                                         has_submenu: false,
                                         callback: async function () {
-                                            const project = await backend.loadProject(projectOverview.id);
+                                            const project = await backend.loadProjectById(projectOverview.id);
                                             const workflowId = project.layers.find(layer => layer.name === layerName)!.workflow;
                                             const workflow = await backend.loadWorkflow(workflowId);
-                                            importWorkflow(canvas.graph, workflow, layerName);
+                                            await importWorkflow(canvas.graph, workflow, layerName);
                                         } as unknown as ContextMenuEventListener
                                     }))
                                 }

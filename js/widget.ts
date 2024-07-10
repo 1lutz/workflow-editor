@@ -13,7 +13,7 @@ import {
     WORKFLOW_OUT_NODE_TYPE
 } from "./constants";
 import {isDatatypeDefinition} from "./typeguards";
-import {getDefinitionName} from "./util";
+import {getDefinitionName, simpleErrorHandler} from "./util";
 import {Backend} from "./backend";
 import {createUI, type WidgetModel} from "./ui/ui";
 import OperatorDefinitionWrapper from "./schema/operatorDefinitionWrapper";
@@ -28,22 +28,26 @@ function registerBackend(serverUrl: string, token: string, graph: LGraph) {
 }
 
 async function registerDefinitions(backend: Backend) {
-    const schema = await backend.fetchOperatorDefinitions();
+    try {
+        const schema = await backend.fetchOperatorDefinitions();
 
-    let operators: { [operatorName: string]: OperatorDefinition } = {};
-    let outputTypes: { [operatorName: string]: string } = {};
+        let operators: { [operatorName: string]: OperatorDefinition } = {};
+        let outputTypes: { [operatorName: string]: string } = {};
 
-    for (const [key, definition] of Object.entries(schema.definitions)) {
-        if (isDatatypeDefinition(definition)) {
-            for (const ref of definition.oneOf) {
-                outputTypes[getDefinitionName(ref)] = key;
+        for (const [key, definition] of Object.entries(schema.definitions)) {
+            if (isDatatypeDefinition(definition)) {
+                for (const ref of definition.oneOf) {
+                    outputTypes[getDefinitionName(ref)] = key;
+                }
+            } else {
+                operators[key] = definition;
             }
-        } else {
-            operators[key] = definition;
         }
-    }
-    for (const [key, operator] of Object.entries(operators)) {
-        registerWorkflowOperator(new OperatorDefinitionWrapper(operator, outputTypes[key]));
+        for (const [key, operator] of Object.entries(operators)) {
+            registerWorkflowOperator(new OperatorDefinitionWrapper(operator, outputTypes[key]));
+        }
+    } catch (err) {
+        simpleErrorHandler("register operators", err);
     }
 }
 
