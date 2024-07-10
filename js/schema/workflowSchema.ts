@@ -81,13 +81,22 @@ export const WorkflowSchema = z.object({
 
 export type WorkflowSchema = z.infer<typeof WorkflowSchema>;
 
-export type WorkflowOperator = {
-    type: string,
-    params: Record<string, any>,
-    sources?: Record<string, WorkflowOperator>
-}
+const BaseWorkflowOperator = z.object({
+    type: z.string(),
+    params: z.record(z.string(), z.any()),
+});
 
-export type Workflow = {
-    type: "Vector" | "Raster" | "Plot",
+export type WorkflowOperator = z.infer<typeof BaseWorkflowOperator> & {
+    sources?: Record<string, WorkflowOperator>
+};
+
+export const WorkflowOperator: z.ZodType<WorkflowOperator> = BaseWorkflowOperator.extend({
+   sources: z.lazy(() => z.record(z.string(), WorkflowOperator).optional())
+});
+
+export const Workflow = z.object({
+    type: z.enum(["Vector", "Raster", "Plot"]),
     operator: WorkflowOperator
-}
+});
+
+export type Workflow = z.infer<typeof Workflow>;
