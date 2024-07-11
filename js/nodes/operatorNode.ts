@@ -93,11 +93,14 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             // Note: this works correctly because when the output is dynamic
             // OperatorDefinitionWrapper ensures there is only one input.
 
-            if (!this.graph?.isExportInProgress && op.hasDynamicOutputType) {
+            if (op.hasDynamicOutputType) {
                 const oldOutputType = this.getOutputInfo(0)!.type;
 
                 if (newOutputType !== oldOutputType) {
-                    this.disconnectOutput(0);
+                    if (!this.graph?.isExportInProgress) {
+                        // do not break graph when importing a workflow
+                        this.disconnectOutput(0);
+                    }
                     this.setOutputDataType(0, newOutputType);
                 }
             }
