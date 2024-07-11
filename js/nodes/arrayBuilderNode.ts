@@ -1,5 +1,6 @@
 import {LGraphNode} from "litegraph.js";
 import {joinDistinct} from "../util";
+import {ARRAY_BUILDER_INPUT_NAME} from "../constants";
 
 export default class ArrayBuilderNode extends LGraphNode {
     static title = "Array Builder";
@@ -9,7 +10,7 @@ export default class ArrayBuilderNode extends LGraphNode {
 
     constructor() {
         super(ArrayBuilderNode.title);
-        this.addInput("item", 0);
+        this.addInput(ARRAY_BUILDER_INPUT_NAME, 0);
         this.addOutput("arr", "array");
     }
 
@@ -34,8 +35,12 @@ export default class ArrayBuilderNode extends LGraphNode {
         let arr = [];
 
         for (let inputSlot = 0; inputSlot < this.inputs.length; inputSlot++) {
-            allTypes.push(this.getInputDataType(inputSlot));
-            arr.push(this.getInputData(inputSlot));
+            const itemData = this.getInputData(inputSlot);
+
+            if (itemData !== undefined) {
+                allTypes.push(this.getInputDataType(inputSlot));
+                arr.push(itemData);
+            }
         }
         this.combinedTypes = joinDistinct(allTypes);
         this.setOutputData(0, arr);
