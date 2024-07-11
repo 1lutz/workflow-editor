@@ -6,6 +6,8 @@ export const WORKFLOW_OUT_INPUT_NAME = "return";
 
 export const ARRAY_BUILDER_NODE_TYPE = OPERATOR_CATEGORY + "/arraybuilder";
 
+export const ARRAY_BUILDER_INPUT_NAME = "item";
+
 export const PREDEFINED_NODE_TYPES = [WORKFLOW_OUT_NODE_TYPE, ARRAY_BUILDER_NODE_TYPE];
 
 export const JSON_META_SCHEMA_URL = "https://json-schema.org/draft-07/schema";

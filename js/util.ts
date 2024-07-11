@@ -51,8 +51,8 @@ export function joinDistinct(arr: any[], separator?: string) {
     return [...new Set(arr)].join(separator);
 }
 
-export function isEmpty(arg: undefined | object | any[]): boolean {
-    if (arg === undefined) {
+export function isEmpty(arg: undefined | null | object | any[]): boolean {
+    if (arg === undefined || arg === null) {
         return true;
     } else if (Array.isArray(arg)) {
         return arg.length === 0;

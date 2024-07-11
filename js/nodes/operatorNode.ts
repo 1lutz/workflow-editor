@@ -93,7 +93,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
             // Note: this works correctly because when the output is dynamic
             // OperatorDefinitionWrapper ensures there is only one input.
 
-            if (op.hasDynamicOutputType) {
+            if (!this.graph?.isExportInProgress && op.hasDynamicOutputType) {
                 const oldOutputType = this.getOutputInfo(0)!.type;
 
                 if (newOutputType !== oldOutputType) {
@@ -135,6 +135,9 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
 
                         if (!(sourceNode instanceof ArrayBuilderNode)) {
                             validationSummary.addError(NewNode.title, `Der Parameter "${sourceName}" erwartet ein Array aus ${sourceDef.innerType}-Datensätzen, das mit ${ArrayBuilderNode.title} erstellt wurde.`);
+                            isValid = false;
+                        } else if (sourceNode.combinedTypes === "") {
+                            validationSummary.addError(NewNode.title, `Das an den Parameter "${sourceName}" übergebene Array ist leer.`);
                             isValid = false;
                         } else if (sourceNode.combinedTypes !== sourceDef.innerType) {
                             validationSummary.addError(NewNode.title, `Der Parameter "${sourceName}" erwartet ein Array aus ${sourceDef.innerType}-Datensätzen, aber es enthält ${sourceNode.combinedTypes}.`);
