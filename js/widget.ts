@@ -1,4 +1,4 @@
-import type {AnyModel, RenderContext} from "@anywidget/types";
+import type {RenderContext} from "@anywidget/types";
 import type {OperatorDefinition, Workflow} from "./schema/workflowSchema";
 import "litegraph.js/css/litegraph";
 import "./ui/widget.css";
@@ -15,7 +15,8 @@ import {
 import {isDatatypeDefinition} from "./typeguards";
 import {getDefinitionName, simpleErrorHandler} from "./util";
 import {Backend} from "./backend";
-import {createUI, type WidgetModel} from "./ui/ui";
+import {WidgetModel, createUI} from "./ui/ui";
+export {type WidgetModel} from "./ui/ui";
 import OperatorDefinitionWrapper from "./schema/operatorDefinitionWrapper";
 import ArrayBuilderNode from "./nodes/arrayBuilderNode";
 import {importWorkflow} from "./ui/workflowImporter";
@@ -107,23 +108,4 @@ export function render({model, el}: RenderContext<WidgetModel>) {
         if (graph.isExportInProgress) return;
         importWorkflow(graph, model.get("workflow"));
     })
-}
-
-export function renderPlainModel({model, el, onExport}: {
-    model: WidgetModel,
-    el: HTMLElement,
-    onExport: (workflow?: Workflow) => void
-}) {
-    const modelWrapper = {
-        get<K extends keyof WidgetModel>(key: K): WidgetModel[K] {
-            return model[key];
-        },
-        on(eventName: string): void {
-            if (eventName === "change:workflow") {
-                // @ts-ignore
-                onExport(this.get("workflow"));
-            }
-        }
-    } as unknown as AnyModel<WidgetModel>;
-    render({model: modelWrapper, el});
 }
