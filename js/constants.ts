@@ -38,15 +38,7 @@ export const RANDOM_COLOR_DICT = [51, 160, 44, 255]; // #33a02c / green
 export const LiteGraph_CONFIG_OVERRIDES = {
     release_link_on_empty_shows_menu: true,
     slot_types_default_in: {
-        _event_: "widget/button",
-        array: ["basic/array", "basic/set_array"],
-        boolean: "basic/boolean",
-        number: "widget/number",
-        object: ["basic/data"],
-        string: ["basic/string", "string/concatenate"],
-        vec2: "math3d/xy-to-vec2",
-        vec3: "math3d/xyz-to-vec3",
-        vec4: "math3d/xyzw-to-vec4",
+        array: ARRAY_BUILDER_NODE_TYPE,
         //The following values must be arrays so that registerWorkflowOperator can push node ids.
         raster: [],
         vector: [],
@@ -54,24 +46,6 @@ export const LiteGraph_CONFIG_OVERRIDES = {
         "raster,vector,plot": ["geoengine/GdalSource", "geoengine/OgrSource"]
     },
     slot_types_default_out: {
-        _event_: ["logic/IF", "events/sequence", "events/log", "events/counter"],
-        array: ["basic/watch", "basic/set_array", "basic/array[]"],
-        boolean: ["logic/IF", "basic/watch", "math/branch", "math/gate"],
-        number: [
-            "basic/watch",
-            {node: "math/operation", properties: {OP: "*"}, title: "A*B"},
-            {node: "math/operation", properties: {OP: "/"}, title: "A/B"},
-            {node: "math/operation", properties: {OP: "+"}, title: "A+B"},
-            {node: "math/operation", properties: {OP: "-"}, title: "A-B"},
-            {node: "math/compare", outputs: [["A==B", "boolean"]], title: "A==B"},
-            {node: "math/compare", outputs: [["A>B", "boolean"]], title: "A>B"},
-            {node: "math/compare", outputs: [["A<B", "boolean"]], title: "A<B"}
-        ],
-        object: ["basic/object_property", "basic/object_keys", "string/toString", "basic/watch"],
-        string: ["basic/watch", "string/compare", "string/concatenate", "string/contains"],
-        vec2: "math3d/vec2-to-xy",
-        vec3: "math3d/vec3-to-xyz",
-        vec4: "math3d/vec4-to-xyzw",
         //The following values must be arrays so that registerWorkflowOperator can push node ids.
         raster: [WORKFLOW_OUT_NODE_TYPE],
         vector: [WORKFLOW_OUT_NODE_TYPE],

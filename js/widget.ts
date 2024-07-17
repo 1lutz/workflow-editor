@@ -3,7 +3,7 @@ import type {OperatorDefinition, Workflow} from "./schema/workflowSchema";
 import "litegraph.js/css/litegraph";
 import "./ui/widget.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import {LGraph, LiteGraph} from "litegraph.js";
+import {LGraph, LiteGraph} from "litegraph.js/build/litegraph.core";
 import {registerWorkflowOperator} from "./nodes/operatorNode";
 import WorkflowOutNode from "./nodes/workflowOutNode";
 import {

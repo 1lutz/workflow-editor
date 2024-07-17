@@ -1,4 +1,4 @@
-import {IWidget, LGraphNode, LiteGraph} from "litegraph.js";
+import {IWidget, LGraphNode, LiteGraph} from "litegraph.js/build/litegraph.core";
 import YAML, {isScalar} from "yaml";
 import {clippedString, isEmpty} from "../util";
 import {ELLIPSIS} from "../constants";

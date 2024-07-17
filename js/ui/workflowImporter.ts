@@ -1,4 +1,4 @@
-import {LGraph, LGraphGroup, LGraphNode, LiteGraph} from "litegraph.js";
+import {LGraph, LGraphGroup, LGraphNode, LiteGraph} from "litegraph.js/build/litegraph.core";
 import type {Workflow, WorkflowOperator} from "../schema/workflowSchema";
 import {layout, graphlib} from "@dagrejs/dagre";
 import {

@@ -1,7 +1,7 @@
 import type {WorkflowOperator} from "./schema/workflowSchema";
 import {ResultType, FeatureDataType} from "./schema/backendSchema";
 import {Backend} from "./backend";
-import {LGraphNode} from "litegraph.js";
+import {LGraphNode} from "litegraph.js/build/litegraph.core";
 import {buildWorkflowFromInput} from "./util";
 import {isPromise} from "./typeguards";
 

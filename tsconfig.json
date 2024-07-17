@@ -20,6 +20,11 @@
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"noFallthroughCasesInSwitch": true
+		"noFallthroughCasesInSwitch": true,
+		"paths": {
+			"litegraph.js/build/litegraph.core": [
+				"./node_modules/litegraph.js/src/litegraph.d.ts"
+			]
+		}
 	}
 }

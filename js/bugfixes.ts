@@ -1,7 +1,7 @@
 // @ts-nocheck
 // noinspection PointlessBooleanExpressionJS,JSDuplicatedDeclaration
 
-import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js";
+import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js/build/litegraph.core";
 import {isPromise} from "./typeguards";
 
 /**

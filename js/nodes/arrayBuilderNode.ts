@@ -1,4 +1,4 @@
-import {LGraphNode} from "litegraph.js";
+import {LGraphNode} from "litegraph.js/build/litegraph.core";
 import {joinDistinct} from "../util";
 import {ARRAY_BUILDER_INPUT_NAME} from "../constants";
 

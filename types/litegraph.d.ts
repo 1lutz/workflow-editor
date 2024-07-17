@@ -1,6 +1,6 @@
-import {INodeInputSlot, INodeOutputSlot, LGraphGroup} from "litegraph.js";
+import {INodeInputSlot, INodeOutputSlot, LGraphGroup} from "litegraph.js/build/litegraph.core";
 
-declare module "litegraph.js" {
+declare module "litegraph.js/build/litegraph.core" {
     interface LGraphCanvas {
         default_connection_color_byType: { [key: string]: string };
         default_connection_color_byTypeOff: { [key: string]: string };
