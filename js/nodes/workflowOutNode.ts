@@ -1,4 +1,4 @@
-import {LGraphNode} from "litegraph.js";
+import {LGraphNode} from "litegraph.js/build/litegraph.core";
 import {buildWorkflowFromInput, getValidationSummary} from "../util";
 import {WORKFLOW_OUT_INPUT_NAME} from "../constants";
 

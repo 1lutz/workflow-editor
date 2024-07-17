@@ -6,7 +6,7 @@ import {
     LGraphNode,
     LiteGraph,
     Vector2
-} from "litegraph.js";
+} from "litegraph.js/build/litegraph.core";
 import {MY_TEMPLATES_DIRECTORY, OPERATOR_CATEGORY, WGS_84, WGS_84_EXTENT} from "../constants";
 import {
     buildDefaultSymbologyForWorkflow,

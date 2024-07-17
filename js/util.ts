@@ -1,5 +1,5 @@
 import type {JsonSchemaRef, Workflow} from "./schema/workflowSchema";
-import {LGraph, LGraphNode} from "litegraph.js";
+import {LGraph, LGraphNode} from "litegraph.js/build/litegraph.core";
 import {Backend} from "./backend";
 import {ValidationSummary} from "./ui/validationSummary";
 import {z} from "zod";
