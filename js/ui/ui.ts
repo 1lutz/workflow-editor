@@ -78,12 +78,6 @@ function registerExporter(graph: LGraph, model: AnyModel<WidgetModel>) {
             return;
         }
         graph.isExportInProgress = true;
-        /*console.time("Export benchmark");
-
-        for (let i = 0; i < 100; i++) {
-            await graph.runStepAsync();
-        }
-        console.timeEnd("Export benchmark");*/
         await doExportInternal();
         graph.isExportInProgress = false;
     };

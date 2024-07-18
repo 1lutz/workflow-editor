@@ -5,26 +5,6 @@ import {LGraph, LGraphCanvas, LiteGraph} from "litegraph.js/build/litegraph.core
 import {isPromise} from "./typeguards";
 
 /**
- * The built-in "Set Array" node can't set the first index of an array,
- * because it treats zero like an undefined index. This fix updates the
- * node to make the distinction correct.
- */
-function fixSetArrayDoesNotWorkWithIndexZero() {
-    let constructor = LiteGraph.getNodeType("basic/set_array");
-    constructor.prototype.onExecute = function () {
-        var arr = this.getInputData(0);
-        if (!arr)
-            return;
-        var v = this.getInputData(1);
-        if (v === undefined)
-            return;
-        if (typeof this.properties.index === "number")
-            arr[Math.floor(this.properties.index)] = v;
-        this.setOutputData(0, arr);
-    }
-}
-
-/**
  * If the user tries creating a node by dropping a link on the empty grid
  * it would crash in the past because the variable "nodeNewType" is not
  * declared.
@@ -194,7 +174,7 @@ function fixMissingClamp() {
 }
 
 /**
- * LiteGraph normally can run only syncrhonous operators.
+ * LiteGraph normally can run only synchronous operators.
  * This adds support for promise based operators.
  */
 function addRunStepAsync() {
@@ -205,29 +185,37 @@ function addRunStepAsync() {
         //not optimal: executes possible pending actions in node, problem is it is not optimized
         //it is done here as if it was done in the later loop it wont be called in the node missed the onExecute
 
-        //from now on it will iterate only on executable nodes which is faster
-        const nodes = this._nodes_executable
-            ? this._nodes_executable
-            : this._nodes;
-        if (!nodes) {
-            return;
-        }
-
-        const limit = nodes.length;
-
         try {
             //iterations
-            for (var j = 0; j < limit; ++j) {
-                var node = nodes[j];
-                if (LiteGraph.use_deferred_actions && node._waiting_actions && node._waiting_actions.length)
-                    node.executePendingActions();
-                if (node.mode == LiteGraph.ALWAYS && node.onExecute) {
-                    const res = node.onExecute() as void | Promise<void>;
+            const nodes = this.computeExecutionOrder(false, true);
+            const limit = nodes.length;
+            const columns = [];
 
-                    if (isPromise(res)) {
-                        await res;
+            for (let i = 0; i < limit; ++i) {
+                const node = nodes[i];
+                const col = node._level || 1;
+                if (!columns[col]) {
+                    columns[col] = [];
+                }
+                columns[col].push(node);
+            }
+            const promises: Promise<void>[] = [];
+
+            for (let i = 1; i < columns.length; ++i) {
+                promises.length = 0;
+
+                for (const node of columns[i]) {
+                    if (LiteGraph.use_deferred_actions && node._waiting_actions && node._waiting_actions.length)
+                        node.executePendingActions();
+                    if (node.mode == LiteGraph.ALWAYS && node.onExecute) {
+                        const res = node.onExecute() as void | Promise<void>;
+
+                        if (isPromise(res)) {
+                            promises.push(res);
+                        }
                     }
                 }
+                await Promise.all(promises);
             }
 
             this.fixedtime += this.fixedtime_lapse;
@@ -278,7 +266,6 @@ function fixCaptureStackTrace() {
  * Automatically applies fixes to external components like LiteGraph.
  */
 export default function applyAllBugfixes() {
-    fixSetArrayDoesNotWorkWithIndexZero();
     fixCreateDefaultNodeForSlotFailsInStrictMode();
     fixMissingClamp();
     addRunStepAsync();
