@@ -59,10 +59,10 @@ async function setupGraph(graph: LGraph, serverUrl: string, token: string, workf
 }
 
 export function render({model, el}: RenderContext<WidgetModel>) {
-    const graph = createUI(model, el);
-    graph.addOutput("Workflow Out", "raster,vector,plot", null);
     LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
     LiteGraph.registerNodeType(ARRAY_BUILDER_NODE_TYPE, ArrayBuilderNode);
+
+    const graph = createUI(model, el);
 
     const initialServerUrl = model.get("serverUrl");
     const initalToken = model.get("token");

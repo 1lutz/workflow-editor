@@ -10,11 +10,12 @@ import {
 } from "../constants";
 import {OperatorNodeInfo} from "../nodes/operatorNode";
 import {simpleErrorHandler} from "../util";
+import {resetGraph} from "./ui";
 
 export async function importWorkflow(litegraph: LGraph, workflow: Workflow | undefined, templateName?: string) {
     console.log("Importing workflow:", workflow);
     if (!templateName) {
-        litegraph.clear();
+        resetGraph(litegraph);
     }
     if (!workflow) {
         await litegraph.doExport(); // show initial WorkflowOut validation
@@ -33,7 +34,11 @@ export async function importWorkflow(litegraph: LGraph, workflow: Workflow | und
         let outNode: LGraphNode | undefined;
 
         if (!templateName) {
-            outNode = addNode(litegraph, g, WORKFLOW_OUT_NODE_TYPE);
+            outNode = litegraph.findNodesByType(WORKFLOW_OUT_NODE_TYPE)[0];
+            g.setNode(String(outNode.id), {
+                width: outNode.size[0],
+                height: outNode.size[1] + LiteGraph.NODE_TITLE_HEIGHT
+            });
         }
         addOperator(litegraph, g, workflow.operator, outNode, WORKFLOW_OUT_INPUT_NAME);
 

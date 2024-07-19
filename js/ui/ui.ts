@@ -9,7 +9,12 @@ import {
 } from "litegraph.js/build/litegraph.core";
 import {AnyModel} from "@anywidget/types";
 import WorkflowOutNode from "../nodes/workflowOutNode";
-import {LGraphCanvas_CONFIG_OVERRIDES, LiteGraph_CONFIG_OVERRIDES, WORKFLOW_OUT_NODE_TYPE} from "../constants";
+import {
+    LGraphCanvas_CONFIG_OVERRIDES,
+    LiteGraph_CONFIG_OVERRIDES,
+    OPERATOR_CATEGORY,
+    WORKFLOW_OUT_NODE_TYPE
+} from "../constants";
 import {getBackend, getValidationSummary} from "../util";
 import applyAllBugfixes from "../bugfixes";
 import {Workflow} from "../schema/workflowSchema";
@@ -53,7 +58,9 @@ function createGraph(domCanvas: HTMLCanvasElement) {
 
 function registerExporter(graph: LGraph, model: AnyModel<WidgetModel>) {
     async function doExportInternal() {
-        console.log("Starting export ...");
+        graph.list_of_graphcanvas.forEach(o => {
+            o.canvas.style.cursor = "progress";
+        })
         graph.setOutputData(WorkflowOutNode.title, null);
         await graph.runStepAsync();
         graph.setDirtyCanvas(true, false);
@@ -70,7 +77,10 @@ function registerExporter(graph: LGraph, model: AnyModel<WidgetModel>) {
             validationSummary.addError("Allgemein", `Damit das Ergebnis eindeutig ist, darf es nur einen Ausgabeblock geben. Lösche überschüssige ${WorkflowOutNode.title}-Blöcke.`);
         }
         validationSummary.render();
-        console.log("Export finished!");
+        graph.list_of_graphcanvas.forEach(o => {
+            o.canvas.style.removeProperty("cursor");
+        })
+        console.log("Export finished!", workflow);
     }
 
     graph.doExport = async () => {
@@ -84,8 +94,44 @@ function registerExporter(graph: LGraph, model: AnyModel<WidgetModel>) {
     graph.onNodeConnectionChange = graph.doExport;
 }
 
-function getCanvasExtraMenuOptions(canvas: LGraphCanvas): ContextMenuItem[] {
+function getCanvasMenuOptions(this: LGraphCanvas): ContextMenuItem[] {
+    const canvas = this;
     return [
+        {
+            content: "Add Node",
+            has_submenu: true,
+            callback: function (_node: ContextMenuItem, _options: IContextMenuOptions, e: MouseEvent, prev_menu: ContextMenu | undefined) {
+                const graph = canvas.graph;
+                if (!graph) return;
+                const nodes = LiteGraph.getNodeTypesInCategory(OPERATOR_CATEGORY, canvas.filter || graph.filter);
+                const entries = nodes
+                    .filter(node => {
+                        // @ts-ignore
+                        return !node.skip_list;
+                    })
+                    .map(node => ({
+                        // @ts-ignore
+                        value: node.type,
+                        // @ts-ignore
+                        content: node.title,
+                        has_submenu: false,
+                        callback: function (cmi: ContextMenuItem, _options: IContextMenuOptions, _e: MouseEvent, prev_menu: ContextMenu | undefined) {
+                            // noinspection JSVoidFunctionReturnValueUsed
+                            const firstEvent: any = prev_menu!.getFirstEvent();
+                            graph.beforeChange();
+                            const node = LiteGraph.createNode(cmi!.value);
+
+                            if (node) {
+                                node.pos = canvas.convertEventToCanvasOffset(firstEvent);
+                                graph.add(node);
+                            }
+                            graph.afterChange();
+                        }
+                    }));
+                const ref_window = canvas.getCanvasWindow();
+                new LiteGraph.ContextMenu(entries, {event: e, parentMenu: prev_menu}, ref_window);
+            }
+        },
         {
             content: "Import workflow as template",
             has_submenu: true,
@@ -127,13 +173,22 @@ function getCanvasExtraMenuOptions(canvas: LGraphCanvas): ContextMenuItem[] {
         }];
 }
 
+export function resetGraph(graph: LGraph) {
+    graph.clear();
+    graph.addOutput(WorkflowOutNode.title, "raster,vector,plot", null);
+    const outNode = LiteGraph.createNode(WORKFLOW_OUT_NODE_TYPE);
+    graph.add(outNode);
+    outNode.pos = [100, 100];
+}
+
 export function createUI(model: AnyModel<WidgetModel>, el: HTMLElement) {
     const domCanvas = createCanvas();
     el.appendChild(createContainer(domCanvas));
     const graph = createGraph(domCanvas);
     registerExporter(graph, model);
     // @ts-ignore
-    graph.list_of_graphcanvas[0].getExtraMenuOptions = getCanvasExtraMenuOptions;
+    graph.list_of_graphcanvas[0].getMenuOptions = getCanvasMenuOptions;
+    resetGraph(graph);
 
     const validationSummary = new ValidationSummary();
     // @ts-ignore
