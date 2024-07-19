@@ -7,6 +7,8 @@ declare module "litegraph.js/build/litegraph.core" {
     }
 
     interface LGraphNode {
+        block_delete: boolean;
+
         setOutputDataType(slot: number, type: INodeOutputSlot["type"]): void
 
         addInputs(array: [string, string | -1, Partial<INodeInputSlot>?][]): void;
@@ -38,5 +40,9 @@ declare module "litegraph.js/build/litegraph.core" {
 
     interface LGraphGroup {
         size: [number, number];
+    }
+
+    interface IContextMenuItem {
+        value?: any;
     }
 }
