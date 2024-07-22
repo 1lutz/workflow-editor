@@ -6,7 +6,7 @@ import {
     LGraphNode,
     LiteGraph,
     Vector2
-} from "litegraph.js";
+} from "litegraph.js/build/litegraph.core";
 import {MY_TEMPLATES_DIRECTORY, OPERATOR_CATEGORY, WGS_84, WGS_84_EXTENT} from "../constants";
 import {
     buildDefaultSymbologyForWorkflow,
@@ -97,7 +97,10 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
                 const oldOutputType = this.getOutputInfo(0)!.type;
 
                 if (newOutputType !== oldOutputType) {
-                    this.disconnectOutput(0);
+                    if (!this.graph?.isExportInProgress) {
+                        // do not break graph when importing a workflow
+                        this.disconnectOutput(0);
+                    }
                     this.setOutputDataType(0, newOutputType);
                 }
             }
@@ -135,6 +138,9 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
 
                         if (!(sourceNode instanceof ArrayBuilderNode)) {
                             validationSummary.addError(NewNode.title, `Der Parameter "${sourceName}" erwartet ein Array aus ${sourceDef.innerType}-Datensätzen, das mit ${ArrayBuilderNode.title} erstellt wurde.`);
+                            isValid = false;
+                        } else if (sourceNode.combinedTypes === "") {
+                            validationSummary.addError(NewNode.title, `Das an den Parameter "${sourceName}" übergebene Array ist leer.`);
                             isValid = false;
                         } else if (sourceNode.combinedTypes !== sourceDef.innerType) {
                             validationSummary.addError(NewNode.title, `Der Parameter "${sourceName}" erwartet ein Array aus ${sourceDef.innerType}-Datensätzen, aber es enthält ${sourceNode.combinedTypes}.`);

@@ -1,14 +1,21 @@
-import {LGraph, LGraphGroup, LGraphNode, LiteGraph} from "litegraph.js";
+import {LGraph, LGraphGroup, LGraphNode, LiteGraph} from "litegraph.js/build/litegraph.core";
 import type {Workflow, WorkflowOperator} from "../schema/workflowSchema";
 import {layout, graphlib} from "@dagrejs/dagre";
-import {OPERATOR_CATEGORY, WORKFLOW_OUT_INPUT_NAME, WORKFLOW_OUT_NODE_TYPE} from "../constants";
+import {
+    ARRAY_BUILDER_INPUT_NAME,
+    ARRAY_BUILDER_NODE_TYPE,
+    OPERATOR_CATEGORY,
+    WORKFLOW_OUT_INPUT_NAME,
+    WORKFLOW_OUT_NODE_TYPE
+} from "../constants";
 import {OperatorNodeInfo} from "../nodes/operatorNode";
 import {simpleErrorHandler} from "../util";
+import {resetGraph} from "./ui";
 
 export async function importWorkflow(litegraph: LGraph, workflow: Workflow | undefined, templateName?: string) {
     console.log("Importing workflow:", workflow);
     if (!templateName) {
-        litegraph.clear();
+        resetGraph(litegraph);
     }
     if (!workflow) {
         await litegraph.doExport(); // show initial WorkflowOut validation
@@ -27,8 +34,7 @@ export async function importWorkflow(litegraph: LGraph, workflow: Workflow | und
         let outNode: LGraphNode | undefined;
 
         if (!templateName) {
-            outNode = LiteGraph.createNode(WORKFLOW_OUT_NODE_TYPE);
-            litegraph.add(outNode, true);
+            outNode = litegraph.findNodesByType(WORKFLOW_OUT_NODE_TYPE)[0];
             g.setNode(String(outNode.id), {
                 width: outNode.size[0],
                 height: outNode.size[1] + LiteGraph.NODE_TITLE_HEIGHT
@@ -51,26 +57,55 @@ export async function importWorkflow(litegraph: LGraph, workflow: Workflow | und
     }
 }
 
-function addOperator(litegraph: LGraph, g: graphlib.Graph, operator: WorkflowOperator, parentNode: LGraphNode | undefined, sourceName: string) {
-    //create node
-    const newNode = LiteGraph.createNode(OPERATOR_CATEGORY + "/" + operator.type);
+function addNode(litegraph: LGraph, g: graphlib.Graph, fullType: string, params?: Record<string, any>): LGraphNode {
+    const newNode = LiteGraph.createNode(fullType);
+    if (!newNode) throw new Error("Node '" + fullType + "' was not registered in the editor");
     litegraph.add(newNode, true);
-    (newNode as unknown as OperatorNodeInfo).paramValues = operator.params;
-    const newNodeId = String(newNode.id);
-    g.setNode(newNodeId, {
+    if (params) (newNode as unknown as OperatorNodeInfo).paramValues = params!;
+    g.setNode(String(newNode.id), {
         width: newNode.size[0],
         height: newNode.size[1] + LiteGraph.NODE_TITLE_HEIGHT
     });
+    return newNode;
+}
+
+function addOperator(litegraph: LGraph, g: graphlib.Graph, operator: WorkflowOperator, parentNode: LGraphNode | undefined, sourceName: string) {
+    //create node
+    const newNode = addNode(litegraph, g, OPERATOR_CATEGORY + "/" + operator.type, operator.params);
     //connect output to parent
     if (parentNode) {
         newNode.connect(0, parentNode, sourceName);
-        g.setEdge(newNodeId, String(parentNode.id));
+        g.setEdge(String(newNode.id), String(parentNode.id));
     }
     // create and connect sources
     if (!operator.sources) return;
 
-    for (const [sourceName, sourceDef] of Object.entries(operator.sources)) {
-        addOperator(litegraph, g, sourceDef, newNode, sourceName);
+    // do not loop over Object.entries(operator.sources) so that links do not cross
+    for (let x = 0; x < newNode.inputs.length; x++) {
+        const sourceName = newNode.inputs[x].name;
+        const sourceDef = operator.sources[sourceName];
+        if (!sourceDef) continue; // assume that source is not required
+
+        if (!Array.isArray(sourceDef)) {
+            // add simple source
+            addOperator(litegraph, g, sourceDef, newNode, sourceName);
+        } else {
+            // add array of sources
+            const arrayBuilder = addNode(litegraph, g, ARRAY_BUILDER_NODE_TYPE);
+            arrayBuilder.connect(0, newNode, sourceName);
+            g.setEdge(String(arrayBuilder.id), String(newNode.id));
+
+            for (const item of sourceDef) {
+                addOperator(litegraph, g, item, arrayBuilder, ARRAY_BUILDER_INPUT_NAME);
+            }
+            if (sourceDef.length > 1) {
+                // reset size because new inputs were added
+                g.setNode(String(arrayBuilder.id), {
+                    width: arrayBuilder.size[0],
+                    height: arrayBuilder.size[1] + LiteGraph.NODE_TITLE_HEIGHT
+                });
+            }
+        }
     }
 }
 

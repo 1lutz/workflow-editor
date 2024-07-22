@@ -1,5 +1,5 @@
 import type {JsonSchemaRef, Workflow} from "./schema/workflowSchema";
-import {LGraph, LGraphNode} from "litegraph.js";
+import {LGraph, LGraphNode} from "litegraph.js/build/litegraph.core";
 import {Backend} from "./backend";
 import {ValidationSummary} from "./ui/validationSummary";
 import {z} from "zod";
@@ -51,8 +51,8 @@ export function joinDistinct(arr: any[], separator?: string) {
     return [...new Set(arr)].join(separator);
 }
 
-export function isEmpty(arg: undefined | object | any[]): boolean {
-    if (arg === undefined) {
+export function isEmpty(arg: undefined | null | object | any[]): boolean {
+    if (arg === undefined || arg === null) {
         return true;
     } else if (Array.isArray(arg)) {
         return arg.length === 0;

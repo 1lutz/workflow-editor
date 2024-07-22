@@ -1,12 +1,14 @@
-import {INodeInputSlot, INodeOutputSlot, LGraphGroup} from "litegraph.js";
+import {INodeInputSlot, INodeOutputSlot, LGraphGroup} from "litegraph.js/build/litegraph.core";
 
-declare module "litegraph.js" {
+declare module "litegraph.js/build/litegraph.core" {
     interface LGraphCanvas {
         default_connection_color_byType: { [key: string]: string };
         default_connection_color_byTypeOff: { [key: string]: string };
     }
 
     interface LGraphNode {
+        block_delete: boolean;
+
         setOutputDataType(slot: number, type: INodeOutputSlot["type"]): void
 
         addInputs(array: [string, string | -1, Partial<INodeInputSlot>?][]): void;
@@ -38,5 +40,9 @@ declare module "litegraph.js" {
 
     interface LGraphGroup {
         size: [number, number];
+    }
+
+    interface IContextMenuItem {
+        value?: any;
     }
 }

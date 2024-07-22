@@ -87,11 +87,14 @@ const BaseWorkflowOperator = z.object({
 });
 
 export type WorkflowOperator = z.infer<typeof BaseWorkflowOperator> & {
-    sources?: Record<string, WorkflowOperator>
+    sources?: Record<string, WorkflowOperator | WorkflowOperator[]>
 };
 
 export const WorkflowOperator: z.ZodType<WorkflowOperator> = BaseWorkflowOperator.extend({
-   sources: z.lazy(() => z.record(z.string(), WorkflowOperator).optional())
+   sources: z.lazy(() => z.record(
+       z.string(),
+       z.union([WorkflowOperator, z.array(WorkflowOperator)])
+   ).optional())
 });
 
 export const Workflow = z.object({
