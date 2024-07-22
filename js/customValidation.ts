@@ -187,10 +187,10 @@ async function validateVectorJoin(instance: WorkflowOperator, backend: Backend, 
             const expectedLeftName: string = instance.params.left_column;
             const expectedRightName: string = instance.params.right_column;
 
-            if (!(expectedLeftName in leftWorkflowMetadata)) {
+            if (!(expectedLeftName in leftWorkflowMetadata.columns)) {
                 return `Die Quelle "left" enthält keine Spalte mit dem Namen "${expectedLeftName}".`;
             }
-            if (!(expectedRightName in rightWorkflowMetadata)) {
+            if (!(expectedRightName in rightWorkflowMetadata.columns)) {
                 return `Die Quelle "right" enthält keine Spalte mit dem Namen "${expectedLeftName}".`;
             }
 
