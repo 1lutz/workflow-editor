@@ -9,6 +9,8 @@ import {
     LoadProjectResponse
 } from "./schema/backendSchema";
 
+let cachedWorkflowSchema: WorkflowSchema | null = null;
+
 export class Backend {
     private readonly serverUrl: string;
     private readonly token: string;
@@ -18,8 +20,9 @@ export class Backend {
         this.token = token;
     }
 
-    fetchOperatorDefinitions(): Promise<WorkflowSchema> {
-        return fetchAndParse(this.serverUrl + "/workflow/schema", undefined, WorkflowSchema);
+    async fetchOperatorDefinitions(): Promise<WorkflowSchema> {
+        if (cachedWorkflowSchema) return cachedWorkflowSchema;
+        return cachedWorkflowSchema = await fetchAndParse(this.serverUrl + "/workflow/schema", undefined, WorkflowSchema);
     }
 
     async getDatasetType(datasetName: string): Promise<ResultType> {
