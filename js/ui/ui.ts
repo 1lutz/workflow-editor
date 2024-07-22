@@ -165,7 +165,7 @@ function getCanvasMenuOptions(this: LGraphCanvas): ContextMenuItem[] {
         }];
 }
 
-export function resetGraph(graph: LGraph) {
+export function clearGraph(graph: LGraph) {
     graph.clear();
     graph.addOutput(WorkflowOutNode.title, "raster,vector,plot", null);
     const outNode = LiteGraph.createNode(WORKFLOW_OUT_NODE_TYPE);
@@ -180,7 +180,6 @@ export function createUI(model: AnyModel<WidgetModel>, el: HTMLElement) {
     registerExporter(graph, model);
     // @ts-ignore
     graph.list_of_graphcanvas[0].getMenuOptions = getCanvasMenuOptions;
-    resetGraph(graph);
 
     const validationSummary = new ValidationSummary();
     // @ts-ignore

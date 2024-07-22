@@ -25,18 +25,6 @@ export async function fetchAndParse<T extends z.ZodTypeAny>(input: URL | Request
     return parsed as z.infer<T>;
 }
 
-const cachedJsonFiles = new Map<URL | RequestInfo, Promise<any>>();
-
-export async function fetchAndParseWithCache<T extends z.ZodTypeAny>(input: URL | RequestInfo, init: RequestInit | undefined, schema: T) {
-    let file = cachedJsonFiles.get(input);
-
-    if (!file) {
-        file = fetchAndParse(input, init, schema);
-        cachedJsonFiles.set(input, file);
-    }
-    return file as Promise<z.infer<T>>;
-}
-
 export function getBackend(graph: LGraph): Backend {
     // @ts-ignore
     return graph.backend;

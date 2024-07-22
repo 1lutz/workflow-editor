@@ -8,7 +8,6 @@ import WorkflowOutNode from "./nodes/workflowOutNode";
 import {
     ARRAY_BUILDER_NODE_TYPE,
     OPERATOR_CATEGORY,
-    PREDEFINED_NODE_TYPES,
     WORKFLOW_OUT_NODE_TYPE
 } from "./constants";
 import {isDatatypeDefinition} from "./typeguards";
@@ -108,15 +107,28 @@ async function registerDefinitions(backend: Backend) {
 }
 
 async function setupGraph(graph: LGraph, serverUrl: string, token: string, workflow?: Workflow) {
+    // @ts-ignore
+    const registeredOperators = LiteGraph.getNodeTypesInCategory(OPERATOR_CATEGORY);
+
+    for (const registeredOperator of registeredOperators) {
+        const nodesWithType = graph.findNodesByClass(registeredOperator);
+
+        for (const nodeWithType of nodesWithType) {
+            graph.remove(nodeWithType);
+        }
+        // @ts-ignore
+        LiteGraph.unregisterNodeType(registeredOperator);
+    }
+
+    LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
+    LiteGraph.registerNodeType(ARRAY_BUILDER_NODE_TYPE, ArrayBuilderNode);
+
     const backend = registerBackend(serverUrl, token, graph);
     await registerDefinitions(backend);
     await importWorkflow(graph, workflow);
 }
 
 export function render({model, el}: RenderContext<WidgetModel>) {
-    LiteGraph.registerNodeType(WORKFLOW_OUT_NODE_TYPE, WorkflowOutNode);
-    LiteGraph.registerNodeType(ARRAY_BUILDER_NODE_TYPE, ArrayBuilderNode);
-
     const graph = createUI(model, el);
 
     const initialServerUrl = model.get("serverUrl");
@@ -128,23 +140,6 @@ export function render({model, el}: RenderContext<WidgetModel>) {
     }
 
     model.on("change:serverUrl", () => {
-        // @ts-ignore
-        const registeredOperators = LiteGraph.getNodeTypesInCategory(OPERATOR_CATEGORY);
-
-        for (const registeredOperator of registeredOperators) {
-            // @ts-ignore
-            if (PREDEFINED_NODE_TYPES.includes(registeredOperator.type)) {
-                //keep predefined nodes like "Workflow Out"
-                continue;
-            }
-            const nodesWithType = graph.findNodesByClass(registeredOperator);
-
-            for (const nodeWithType of nodesWithType) {
-                graph.remove(nodeWithType);
-            }
-            // @ts-ignore
-            LiteGraph.unregisterNodeType(registeredOperator);
-        }
         setupGraph(
             graph,
             model.get("serverUrl"),

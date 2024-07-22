@@ -10,12 +10,12 @@ import {
 } from "../constants";
 import {OperatorNodeInfo} from "../nodes/operatorNode";
 import {simpleErrorHandler} from "../util";
-import {resetGraph} from "./ui";
+import {clearGraph} from "./ui";
 
 export async function importWorkflow(litegraph: LGraph, workflow: Workflow | undefined, templateName?: string) {
     console.log("Importing workflow:", workflow);
     if (!templateName) {
-        resetGraph(litegraph);
+        clearGraph(litegraph);
     }
     if (!workflow) {
         await litegraph.doExport(); // show initial WorkflowOut validation
