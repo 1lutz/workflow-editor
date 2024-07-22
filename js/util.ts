@@ -65,7 +65,8 @@ export function uppercaseFirstLetter(s: string): string {
     return s[0].toUpperCase() + s.substring(1);
 }
 
-export function buildWorkflowFromInput(node: LGraphNode, slot: number): Workflow | null {
+export function buildWorkflowFromInput(node: LGraphNode, slotOrName: number | string): Workflow | null {
+    const slot: number = typeof slotOrName === "number" ? slotOrName : node.findInputSlot(slotOrName);
     const data = node.getInputData(slot);
     if (!data) return null;
 

@@ -11,7 +11,10 @@ const dispatcher: Record<string, (instance: WorkflowOperator, backend: Backend, 
     GdalSource: validateGdalSource,
     OgrSource: validateOgrSource,
     NeighborhoodAggregate: validateNeighborhoodAggregate,
-    ColumnRangeFilter: validateColumnRangeFilter
+    ColumnRangeFilter: validateColumnRangeFilter,
+    ClassHistogram: validateClassHistogram,
+    Histogram: validateHistogram,
+    VectorJoin: validateVectorJoin
 };
 
 export function customOperatorValidation(instance: WorkflowOperator, backend: Backend, node: LGraphNode): Promise<ValidationMessage> {
@@ -101,5 +104,102 @@ async function validateColumnRangeFilter(instance: WorkflowOperator, backend: Ba
         if (expectedType !== "number") {
             return `Die Spalte "${expectedName}" ist vom Typ ${foundColumnMeta.dataType}, aber die Range besteht nicht aus Zahlen.`;
         }
+    }
+}
+
+async function validateClassHistogram(instance: WorkflowOperator, backend: Backend, node: LGraphNode) {
+    const workflow = buildWorkflowFromInput(node, 0)!;
+    const workflowMetadata = await backend.getWorkflowMetadata(workflow);
+
+    const expectedName: string | null | undefined = instance.params.columnName;
+
+    switch (workflowMetadata.type) {
+        case "vector":
+            if (expectedName == null) {
+                return `Der Parameter "columnName" muss gesetzt sein bei einer Quelle vom Typ Vector.`;
+            }
+            const foundColumnMeta = workflowMetadata.columns[expectedName];
+
+            if (!foundColumnMeta) {
+                return `Die Quelle enthält keine Spalte mit dem Namen "${expectedName}".`;
+            }
+            if (!["float", "category", "int", "text", "bool", "dateTime"].includes(foundColumnMeta.dataType)) {
+                //"text" works too because the backend parses strings internally and never throws
+                return `Die Spalte ${expectedName} muss numerisch sein.`;
+            }
+            if (foundColumnMeta.measurement.type !== "classification") {
+                return `Die Spalte ${expectedName} muss in Klassen eingeteilt sein.`;
+            }
+            break;
+
+        case "raster":
+            if (expectedName != null) {
+                return `Der Parameter "columnName" darf nicht gesetzt sein bei einer Quelle vom Typ Raster.`;
+            }
+            const foundBandMeta = workflowMetadata.bands[0];
+
+            if (foundBandMeta.measurement.type !== "classification") {
+                return `Das Band ${expectedName} muss in Klassen eingeteilt sein.`;
+            }
+            break;
+    }
+}
+
+async function validateHistogram(instance: WorkflowOperator, backend: Backend, node: LGraphNode) {
+    const workflow = buildWorkflowFromInput(node, 0)!;
+    const workflowMetadata = await backend.getWorkflowMetadata(workflow);
+
+    const expectedName: string | null | undefined = instance.params.columnName;
+
+    switch (workflowMetadata.type) {
+        case "vector":
+            if (expectedName == null) {
+                return `Der Parameter "columnName" muss gesetzt sein bei einer Quelle vom Typ Vector.`;
+            }
+            const foundColumnMeta = workflowMetadata.columns[expectedName];
+
+            if (!foundColumnMeta) {
+                return `Die Quelle enthält keine Spalte mit dem Namen "${expectedName}".`;
+            }
+            if (!["float", "category", "int", "text", "bool", "dateTime"].includes(foundColumnMeta.dataType)) {
+                //"text" works too because the backend parses strings internally and never throws
+                return `Die Spalte ${expectedName} muss numerisch sein.`;
+            }
+            break;
+
+        case "raster":
+            if (expectedName != null) {
+                return `Der Parameter "columnName" darf nicht gesetzt sein bei einer Quelle vom Typ Raster.`;
+            }
+            break;
+    }
+}
+
+async function validateVectorJoin(instance: WorkflowOperator, backend: Backend, node: LGraphNode) {
+    switch (instance.params.type) {
+        case "EquiGeoToData":
+            const [leftWorkflowMetadata, rightWorkflowMetadata] = await Promise.all([
+                backend.getWorkflowMetadata(buildWorkflowFromInput(node, "left")!),
+                backend.getWorkflowMetadata(buildWorkflowFromInput(node, "right")!)
+            ]);
+            if (leftWorkflowMetadata.type !== "vector" || rightWorkflowMetadata.type !== "vector") throw new Error("unreachable");
+
+            const expectedLeftName: string = instance.params.left_column;
+            const expectedRightName: string = instance.params.right_column;
+
+            if (!(expectedLeftName in leftWorkflowMetadata)) {
+                return `Die Quelle "left" enthält keine Spalte mit dem Namen "${expectedLeftName}".`;
+            }
+            if (!(expectedRightName in rightWorkflowMetadata)) {
+                return `Die Quelle "right" enthält keine Spalte mit dem Namen "${expectedLeftName}".`;
+            }
+
+            if (leftWorkflowMetadata.dataType === "Data") {
+                return `Die Quelle "left" muss Geodaten enthalten.`;
+            }
+            if (rightWorkflowMetadata.dataType !== "Data") {
+                return `Die Quelle "right" darf keine Geodaten enthalten.`;
+            }
+            break;
     }
 }

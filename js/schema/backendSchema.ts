@@ -21,17 +21,26 @@ export const IdResponse = z.object({
     id: z.string().uuid()
 });
 
+const Measurement = z.object({
+    type: z.enum(["unitless", "continuous", "classification"])
+});
+
 export const TypedResultDescriptor = z.discriminatedUnion("type", [
     z.object({
         type: z.literal("vector"),
         dataType: z.enum(["Data", "MultiPoint", "MultiLineString", "MultiPolygon"]),
         columns: z.record(z.string(), z.object({
-            dataType: FeatureDataType
+            dataType: FeatureDataType,
+            measurement: Measurement
         }))
     }),
     z.object({
         type: z.literal("raster"),
-        dataType: z.enum(["U8", "U16", "U32", "U64", "I8", "I16", "I32", "I64", "F32", "F64"])
+        dataType: z.enum(["U8", "U16", "U32", "U64", "I8", "I16", "I32", "I64", "F32", "F64"]),
+        bands: z.array(z.object({
+            name: z.string(),
+            measurement: Measurement
+        }))
     }),
     z.object({
         type: z.literal("plot")
