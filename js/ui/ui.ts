@@ -17,16 +17,9 @@ import {
 } from "../constants";
 import {getBackend, getValidationSummary} from "../util";
 import applyAllBugfixes from "../bugfixes";
-import {Workflow} from "../schema/workflowSchema";
 import {ValidationSummary} from "./validationSummary";
 import {importWorkflow} from "./workflowImporter";
-
-/* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
-export interface WidgetModel {
-    serverUrl: string;
-    token: string;
-    workflow?: Workflow;
-}
+import { WidgetModel } from "../widget";
 
 function createCanvas() {
     let domCanvas = document.createElement("canvas");

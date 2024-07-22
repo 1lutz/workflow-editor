@@ -1,4 +1,3 @@
-import type {RenderContext} from "@anywidget/types";
 import type {OperatorDefinition, Workflow} from "./schema/workflowSchema";
 import "litegraph.js/css/litegraph";
 import "./ui/widget.css";
@@ -15,11 +14,67 @@ import {
 import {isDatatypeDefinition} from "./typeguards";
 import {getDefinitionName, simpleErrorHandler} from "./util";
 import {Backend} from "./backend";
-import {WidgetModel, createUI} from "./ui/ui";
-export {type WidgetModel} from "./ui/ui";
+import {createUI} from "./ui/ui";
 import OperatorDefinitionWrapper from "./schema/operatorDefinitionWrapper";
 import ArrayBuilderNode from "./nodes/arrayBuilderNode";
 import {importWorkflow} from "./ui/workflowImporter";
+
+/* Specifies attributes defined with traitlets in ../src/workflow_editor/__init__.py */
+export interface WidgetModel {
+    serverUrl: string;
+    token: string;
+    workflow?: Workflow;
+}
+
+//region AnyWidget Types
+type ObjectHash = Record<string, any>;
+type ChangeEventHandler<Payload> = (_: unknown, value: Payload) => void;
+type EventHandler = (...args: any[]) => void;
+/**
+ * Autocomplete works for literal string unions, but adding a union
+ * of `string` negates autocomplete entirely. This is a workaround
+ * to provide autocomplete but still allow any string.
+ *
+ * @see https://github.com/microsoft/TypeScript/issues/29729
+ */
+type LiteralUnion<T, U = string> = T | (U & {});
+
+export interface AnyModel<T extends ObjectHash = ObjectHash> {
+    get<K extends keyof T>(key: K): T[K];
+    set<K extends keyof T>(key: K, value: T[K]): void;
+    off<K extends keyof T>(
+        eventName?: LiteralUnion<`change:${K & string}` | "msg:custom"> | null,
+        callback?: EventHandler | null,
+    ): void;
+    on(
+        eventName: "msg:custom",
+        callback: (msg: any, buffers: DataView[]) => void,
+    ): void;
+    on<K extends `change:${keyof T & string}`>(
+        eventName: K,
+        callback: K extends `change:${infer Key}`
+            ? ChangeEventHandler<T[Key]>
+            : never,
+    ): void;
+    on<K extends `change:${string}`>(
+        eventName: K,
+        callback: ChangeEventHandler<any>,
+    ): void;
+    on(eventName: string, callback: EventHandler): void;
+    save_changes(): void;
+    send(
+        content: any,
+        callbacks?: any,
+        buffers?: ArrayBuffer[] | ArrayBufferView[],
+    ): void;
+    widget_manager: any;
+}
+
+export interface RenderContext<T extends ObjectHash = ObjectHash> {
+    model: AnyModel<T>;
+    el: HTMLElement;
+}
+//endregion
 
 function registerBackend(serverUrl: string, token: string, graph: LGraph) {
     const backend = new Backend(serverUrl, token);
