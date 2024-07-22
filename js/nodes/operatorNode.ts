@@ -47,6 +47,7 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
 
     if (!op.hasDynamicOutputType) {
         // @ts-ignore
+        // noinspection JSMismatchedCollectionQueryUpdate
         let defaultIn: string[] = LiteGraph.slot_types_default_in[op.outputTypeOnStart];
         defaultIn.push(nodeId);
     }
@@ -188,9 +189,10 @@ export function registerWorkflowOperator(op: OperatorDefinitionWrapper) {
                     callback: function (_node: ContextMenuItem, _options: IContextMenuOptions, e: MouseEvent) {
                         canvas.prompt("Template Name", "", async (templateName: string) => {
                             try {
+                                const templatesProjectIdPromise = backend.findProjectByName(MY_TEMPLATES_DIRECTORY);
                                 const workflowId = await backend.registerWorkflow(outputWorkflow);
-                                const symbology = await buildDefaultSymbologyForWorkflow(outputWorkflow, workflowId, backend); // fail fast
-                                let templatesProjectId = await backend.findProjectByName(MY_TEMPLATES_DIRECTORY);
+                                const symbology = await buildDefaultSymbologyForWorkflow(outputWorkflow, workflowId, backend);
+                                let templatesProjectId = await templatesProjectIdPromise;
 
                                 if (!templatesProjectId) {
                                     templatesProjectId = await backend.createProject({
