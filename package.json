@@ -27,7 +27,6 @@
 		"zod": "^3.23.4"
 	},
 	"devDependencies": {
-		"@anywidget/types": "^0.1.4",
 		"@types/bootstrap": "^5.2.10",
 		"esbuild": "^0.19.11",
 		"esbuild-plugin-polyfill-node": "^0.3.0",
