@@ -123,6 +123,7 @@ export default class ParamsEditor {
                 disable_edit_json: true,
                 //use_default_values: false,
                 keep_oneof_values: false,
+                startval: currentNode.paramValues,
                 schema
             });
             this.oldSchema = schema;
