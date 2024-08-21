@@ -64,16 +64,21 @@ async function validateOgrSource(instance: WorkflowOperator, backend: Backend) {
 function validateNeighborhoodAggregate(instance: WorkflowOperator) {
     if (instance.params.neighborhood.type === "weightsMatrix") {
         const weights: number[][] = instance.params.neighborhood.weights;
-        const columnCount = weights.length;
+        const rowCount = weights.length;
 
-        if (columnCount % 2 === 0) {
-            return "Die Gewichtungsmatrix muss ungerade Dimensionen haben.";
+        if (rowCount % 2 === 0) {
+            return `Die Gewichtungsmatrix muss ungerade Dimensionen haben. Es gibt aber ${rowCount} Zeilen.`;
         }
-        for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-            const currentRowLength = weights[columnIndex].length;
+        const firstColumnLength = weights[0].length;
 
-            if (currentRowLength !== columnCount) {
-                return `Es gibt ${columnCount} Spalten. Daher muss jede Zeile ${columnCount} Zellen besitzen. Zeile ${columnIndex + 1} hat aber ${currentRowLength} Zellen.`;
+        if (firstColumnLength % 2 === 0) {
+            return `Die Gewichtungsmatrix muss ungerade Dimensionen haben. Die erste Zeile hat aber ${firstColumnLength} Zellen.`;
+        }
+        for (let rowIndex = 1; rowIndex < rowCount; rowIndex++) {
+            const currentColumnLength = weights[rowIndex].length;
+
+            if (currentColumnLength !== firstColumnLength) {
+                return `Alle Zeilen müssen gleich lang sein. Die erste Zeile hat aber ${firstColumnLength} Zellen und Zeile ${rowIndex + 1} ${currentColumnLength} Zellen.`;
             }
         }
     }
