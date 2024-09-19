@@ -14,7 +14,8 @@
 		"dev": "node esbuildscript.mjs --watch",
 		"build": "node esbuildscript.mjs",
 		"typecheck": "tsc --noEmit",
-		"generate-types": "tsc --emitDeclarationOnly"
+		"generate-types": "tsc --emitDeclarationOnly",
+		"prepare": "npm run build && npm run generate-types"
 	},
 	"dependencies": {
 		"@dagrejs/dagre": "^1.1.3",
