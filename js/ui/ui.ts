@@ -7,7 +7,6 @@ import {
     LGraphCanvas,
     LiteGraph
 } from "litegraph.js/build/litegraph.core";
-import {AnyModel} from "@anywidget/types";
 import WorkflowOutNode from "../nodes/workflowOutNode";
 import {
     LGraphCanvas_CONFIG_OVERRIDES,
@@ -19,7 +18,7 @@ import {getBackend, getValidationSummary} from "../util";
 import applyAllBugfixes from "../bugfixes";
 import {ValidationSummary} from "./validationSummary";
 import {importWorkflow} from "./workflowImporter";
-import { WidgetModel } from "../widget";
+import {AnyModel, WidgetModel } from "../widget";
 
 function createCanvas() {
     let domCanvas = document.createElement("canvas");
