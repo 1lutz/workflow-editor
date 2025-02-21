@@ -6,13 +6,13 @@ build-backend = "hatchling.build"
 name = "workflow_editor"
 version = "0.0.0"
 dependencies = [
-  "anywidget ~= 0.8"
+  "anywidget == 0.8.1"
 ]
 
 [project.optional-dependencies]
 dev = [
   "watchfiles",
-  "notebook ~= 7.1",
+  "notebook == 7.0.7",
   "mypy",
   "pycodestyle"
 ]
